@@ -1,202 +1,206 @@
-// App Data State
-let appData = {
-  settings: {
-    basicSalary: 0,
-    otRate: 0,
-    otherAllowance: 0
-  },
-  records: {} // Format: { "YYYY-MM-DD": { duty: 8, ot: 2, otRate: 50, other: 0, note: "" } }
-};
+// Local Storage Keys
+const STORAGE_KEY_ENTRIES = 'reliance_ot_entries';
+const STORAGE_KEY_USER = 'reliance_user_info';
 
 // Initialize App
-document.addEventListener("DOMContentLoaded", () => {
-  loadData();
-  setCurrentDateHeader();
-  updateHomeSummary();
-  initFormDates();
+document.addEventListener('DOMContentLoaded', () => {
+    initLiveDate();
+    loadUserProfile();
+    renderHomeSummary();
+    
+    // Set default month for report
+    const today = new Date();
+    const currentMonthStr = today.toISOString().slice(0, 7);
+    const reportMonthInput = document.getElementById('report-month-select');
+    if (reportMonthInput) {
+        reportMonthInput.value = currentMonthStr;
+        renderReport();
+    }
 });
 
-// Load Data from LocalStorage
-function loadData() {
-  const saved = localStorage.getItem("reliance_app_data");
-  if (saved) {
-    try {
-      appData = JSON.parse(saved);
-    } catch (e) {
-      console.error("Failed to parse data", e);
+// Display Live Date and Day
+function initLiveDate() {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const todayStr = new Date().toLocaleDateString('bn-BD', options);
+    const dateElement = document.getElementById('current-date-text');
+    if (dateElement) {
+        dateElement.innerHTML = `<i class="far fa-calendar-alt"></i> আজ: ${todayStr}`;
     }
-  }
 }
 
-// Save Data to LocalStorage
-function saveData() {
-  localStorage.setItem("reliance_app_data", JSON.stringify(appData));
+// Save & Load User Profile
+function saveUserProfile() {
+    const name = document.getElementById('user-name-input').value;
+    const id = document.getElementById('user-id-input').value;
+    const userInfo = { name, id };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(userInfo));
+    updateUserBadge(name, id);
 }
 
-// UI Functions
-function setCurrentDateHeader() {
-  const today = new Date();
-  const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-  const dateStr = today.toLocaleDateString('bn-BD', options);
-  const dateElem = document.getElementById("current-date-text");
-  if (dateElem) dateElem.innerText = `আজকের তারিখ: ${dateStr}`;
-}
-
-function switchTab(tabName, btnElement) {
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-
-  const selectedTab = document.getElementById(`tab-${tabName}`);
-  if (selectedTab) selectedTab.classList.add('active');
-  if (btnElement) btnElement.classList.add('active');
-
-  if (tabName === 'home') updateHomeSummary();
-  if (tabName === 'report') initReportTab();
-  if (tabName === 'settings') loadSettingsForm();
-}
-
-function initFormDates() {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const entryDate = document.getElementById("entry-date");
-  if (entryDate) entryDate.value = todayStr;
-
-  const calDate = document.getElementById("calendar-date-select");
-  if (calDate) calDate.value = todayStr;
-
-  const repMonth = document.getElementById("report-month-select");
-  if (repMonth) repMonth.value = todayStr.substring(0, 7);
-}
-
-// Home Summary
-function updateHomeSummary() {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const currentMonthStr = todayStr.substring(0, 7);
-  const todayRecord = appData.records[todayStr] || { duty: 0, ot: 0, otRate: appData.settings.otRate || 0, other: 0 };
-
-  document.getElementById("sum-today-duty").innerText = `${todayRecord.duty || 0} ঘণ্টা`;
-  document.getElementById("sum-today-ot").innerText = `${todayRecord.ot || 0} ঘণ্টা`;
-  
-  const otPayToday = (todayRecord.ot || 0) * (todayRecord.otRate || appData.settings.otRate || 0);
-  document.getElementById("sum-today-otpay").innerText = `৳${otPayToday.toFixed(0)}`;
-
-  // Calculate Month Total
-  let monthTotal = 0;
-  Object.keys(appData.records).forEach(date => {
-    if (date.startsWith(currentMonthStr)) {
-      const rec = appData.records[date];
-      const otAmt = (rec.ot || 0) * (rec.otRate || 0);
-      const otherAmt = Number(rec.other || 0);
-      monthTotal += otAmt + otherAmt;
+function loadUserProfile() {
+    const saved = localStorage.getItem(STORAGE_KEY_USER);
+    if (saved) {
+        const userInfo = JSON.parse(saved);
+        if (document.getElementById('user-name-input')) document.getElementById('user-name-input').value = userInfo.name || '';
+        if (document.getElementById('user-id-input')) document.getElementById('user-id-input').value = userInfo.id || '';
+        updateUserBadge(userInfo.name, userInfo.id);
     }
-  });
+}
 
-  document.getElementById("sum-month-total").innerText = `৳${monthTotal.toFixed(0)}`;
+function updateUserBadge(name, id) {
+    document.getElementById('display-user-name').innerText = name || 'শ্রমিক নাম';
+    document.getElementById('display-user-id').innerText = id ? `ID: ${id}` : 'ID: ---';
+}
+
+// Tab Switching
+function switchTab(tabId, element) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabId).classList.add('active');
+    element.classList.add('active');
+
+    if (tabId === 'tab-report') {
+        renderReport();
+    }
 }
 
 // Modal Control
 function openEntryModal() {
-  const entryOtRate = document.getElementById("entry-ot-rate");
-  if (entryOtRate) entryOtRate.value = appData.settings.otRate || 0;
-  
-  const todayStr = new Date().toISOString().split('T')[0];
-  if (appData.records[todayStr]) {
-    const rec = appData.records[todayStr];
-    document.getElementById("entry-duty").value = rec.duty;
-    document.getElementById("entry-ot").value = rec.ot;
-    document.getElementById("entry-ot-rate").value = rec.otRate;
-    document.getElementById("entry-other").value = rec.other;
-    document.getElementById("entry-note").value = rec.note || "";
-  }
-
-  document.getElementById("entry-modal").style.display = "flex";
+    document.getElementById('entry-modal').style.display = 'block';
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('entry-date').value = today;
+    checkFridayLogic();
 }
 
 function closeEntryModal() {
-  document.getElementById("entry-modal").style.display = "none";
+    document.getElementById('entry-modal').style.display = 'none';
 }
 
-// Save Daily Record
-function saveDailyRecord(e) {
-  e.preventDefault();
-  const date = document.getElementById("entry-date").value;
-  const duty = parseFloat(document.getElementById("entry-duty").value) || 0;
-  const ot = parseFloat(document.getElementById("entry-ot").value) || 0;
-  const otRate = parseFloat(document.getElementById("entry-ot-rate").value) || (appData.settings.otRate || 0);
-  const other = parseFloat(document.getElementById("entry-other").value) || 0;
-  const note = document.getElementById("entry-note").value;
+// Auto Friday Logic
+function checkFridayLogic() {
+    const dateVal = document.getElementById('entry-date').value;
+    if (!dateVal) return;
 
-  appData.records[date] = { duty, ot, otRate, other, note };
-  saveData();
-  closeEntryModal();
-  updateHomeSummary();
-  alert("আজকের হিসাব সংরক্ষণ করা হয়েছে!");
+    const selectedDate = new Date(dateVal);
+    const dayOfWeek = selectedDate.getDay(); // 5 = Friday
+    
+    const dayNames = ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"];
+    document.getElementById('day-name-display').innerText = `(${dayNames[dayOfWeek]})`;
+
+    const fridayNotice = document.getElementById('friday-notice');
+    const dutyInput = document.getElementById('entry-duty');
+    const otInput = document.getElementById('entry-ot');
+
+    if (dayOfWeek === 5) { // Friday
+        fridayNotice.style.display = 'block';
+        dutyInput.value = 0; // No basic duty deduction
+        otInput.value = 8;   // Auto 8 Hours OT
+    } else {
+        fridayNotice.style.display = 'none';
+        dutyInput.value = 8;
+        otInput.value = 0;
+    }
 }
 
-// Settings
-function loadSettingsForm() {
-  document.getElementById("set-basic").value = appData.settings.basicSalary || "";
-  document.getElementById("set-ot-rate").value = appData.settings.otRate || "";
-  document.getElementById("set-other").value = appData.settings.otherAllowance || 0;
+// Save Daily Entry
+function saveDailyEntry() {
+    const date = document.getElementById('entry-date').value;
+    const duty = parseFloat(document.getElementById('entry-duty').value) || 0;
+    const ot = parseFloat(document.getElementById('entry-ot').value) || 0;
+
+    if (!date) {
+        alert('অনুগ্রহ করে একটি তারিখ নির্বাচন করুন।');
+        return;
+    }
+
+    let entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
+    entries[date] = { duty, ot };
+    localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
+
+    closeEntryModal();
+    renderHomeSummary();
+    alert('হিসাব সফলভাবে সেভ করা হয়েছে!');
 }
 
-function saveSettings(e) {
-  e.preventDefault();
-  appData.settings.basicSalary = parseFloat(document.getElementById("set-basic").value) || 0;
-  appData.settings.otRate = parseFloat(document.getElementById("set-ot-rate").value) || 0;
-  appData.settings.otherAllowance = parseFloat(document.getElementById("set-other").value) || 0;
-  
-  saveData();
-  alert("সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে!");
+// Render Summary on Home Screen
+function renderHomeSummary() {
+    const entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentMonthStr = todayStr.slice(0, 7);
+
+    // Today's Data
+    const todayData = entries[todayStr] || { duty: 0, ot: 0 };
+    document.getElementById('sum-today-duty').innerText = `${todayData.duty} ঘণ্টা`;
+    document.getElementById('sum-today-ot').innerText = `${todayData.ot} ঘণ্টা`;
+
+    // Calculation Rate (Est. 50 Tk per OT hour - adjust as needed)
+    const otRate = 50; 
+    document.getElementById('sum-today-otpay').innerText = `৳${todayData.ot * otRate}`;
+
+    // Monthly Calculation
+    let monthOT = 0;
+    Object.keys(entries).forEach(date => {
+        if (date.startsWith(currentMonthStr)) {
+            monthOT += entries[date].ot || 0;
+        }
+    });
+
+    document.getElementById('sum-month-total').innerText = `৳${monthOT * otRate}`;
 }
 
 // Calendar Detail
 function loadCalendarDetail() {
-  const date = document.getElementById("calendar-date-select").value;
-  const detailBox = document.getElementById("calendar-detail");
-  const rec = appData.records[date];
+    const selectedDate = document.getElementById('calendar-date-select').value;
+    const entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
+    const detailBox = document.getElementById('calendar-detail');
 
-  if (rec) {
-    const otPay = rec.ot * rec.otRate;
-    detailBox.innerHTML = `
-      <p><strong>Duty:</strong> ${rec.duty} ঘণ্টা</p>
-      <p><strong>OT:</strong> ${rec.ot} ঘণ্টা (৳${otPay})</p>
-      <p><strong>Other Pay:</strong> ৳${rec.other}</p>
-      <p><strong>Note:</strong> ${rec.note || "নেই"}</p>
-    `;
-  } else {
-    detailBox.innerHTML = `<p>এই তারিখে কোনো হিসাব এন্ট্রি করা হয়নি।</p>`;
-  }
-}
-
-// Report Render
-function initReportTab() {
-  renderReport();
-}
-
-function renderReport() {
-  const monthStr = document.getElementById("report-month-select").value;
-  let totalDuty = 0;
-  let totalOt = 0;
-  let totalOtPay = 0;
-  let totalOther = 0;
-
-  Object.keys(appData.records).forEach(date => {
-    if (date.startsWith(monthStr)) {
-      const rec = appData.records[date];
-      totalDuty += Number(rec.duty || 0);
-      totalOt += Number(rec.ot || 0);
-      totalOtPay += Number((rec.ot || 0) * (rec.otRate || 0));
-      totalOther += Number(rec.other || 0);
+    if (entries[selectedDate]) {
+        const item = entries[selectedDate];
+        detailBox.innerHTML = `
+            <p><strong>তারিখ:</strong> ${selectedDate}</p>
+            <p><strong>ডিউটি:</strong> ${item.duty} ঘণ্টা</p>
+            <p><strong>ওটি (OT):</strong> ${item.ot} ঘণ্টা</p>
+        `;
+    } else {
+        detailBox.innerHTML = `<p class="text-light">এই তারিখে কোনো তথ্য সেভ করা নেই।</p>`;
     }
-  });
+}
 
-  const basic = Number(appData.settings.basicSalary || 0);
-  const grandTotal = basic + totalOtPay + totalOther;
+// Monthly Report & PDF Generation
+function renderReport() {
+    const selectedMonth = document.getElementById('report-month-select').value;
+    if (!selectedMonth) return;
 
-  document.getElementById("rep-duty").innerText = totalDuty;
-  document.getElementById("rep-ot").innerText = totalOt;
-  document.getElementById("rep-basic").innerText = basic;
-  document.getElementById("rep-otpay").innerText = totalOtPay.toFixed(0);
-  document.getElementById("rep-other").innerText = totalOther.toFixed(0);
-  document.getElementById("rep-total").innerText = grandTotal.toFixed(0);
+    const entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
+    let totalDuty = 0;
+    let totalOT = 0;
+
+    Object.keys(entries).forEach(date => {
+        if (date.startsWith(selectedMonth)) {
+            totalDuty += entries[date].duty || 0;
+            totalOT += entries[date].ot || 0;
+        }
+    });
+
+    const otRate = 50; // OT Rate per hour
+    const totalOTPay = totalOT * otRate;
+
+    document.getElementById('rep-duty').innerText = `${totalDuty} ঘণ্টা`;
+    document.getElementById('rep-ot').innerText = `${totalOT} ঘণ্টা`;
+    document.getElementById('rep-otpay').innerText = `৳${totalOTPay}`;
+    document.getElementById('rep-total').innerText = `৳${totalOTPay}`;
+}
+
+// Download Report as PDF
+function downloadPDFReport() {
+    const element = document.getElementById('pdf-report-area');
+    const opt = {
+        margin:       10,
+        filename:     'Reliance_Job_OT_Report.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
 }
