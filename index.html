@@ -9,7 +9,7 @@
 </head>
 <body>
 
-  <!-- লাইভ কাউন্টার সেকশন -->
+  <!-- লাইভ ইউজার কাউন্টার -->
   <div class="stats-bar">
     <div class="stat-item">🟢 অনলাইন ইউজার: <span id="live-online">1</span></div>
     <div class="stat-item">👁️ মোট ভিজিটর: <span id="total-visitors">1</span></div>
@@ -23,7 +23,7 @@
   </header>
 
   <div class="container">
-    <!-- তারিখ কার্ড -->
+    <!-- তারিখ প্রদর্শন -->
     <div class="date-card">
       📅 আজ: <span id="current-date-str">শুক্রবার, ৯ অক্টোবর, ২০২৬</span>
     </div>
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <!-- মূল হিসাবের কার্ড গ্রিড -->
+    <!-- মূল ৪টি হিসাবের কার্ড -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-title">আজকের Duty</div>
@@ -53,7 +53,7 @@
         <div class="stat-value">৳<span id="today-ot-pay">0</span></div>
       </div>
       <div class="stat-card green-card">
-        <div class="stat-title">এই মাসের মোট OT</div>
+        <div class="stat-title">এই মাসের মোট</div>
         <div class="stat-value">৳<span id="month-total">0</span></div>
       </div>
     </div>
@@ -61,11 +61,11 @@
     <!-- হিসাব যোগ করার বাটন -->
     <button class="btn-primary" onclick="showAddRecordModal()">➕ আজকের হিসাব যোগ করুন</button>
 
-    <!-- কোন তারিখে কত ঘন্টা হিসেব তালিকা -->
+    <!-- তারিখ অনুযায়ী সংরক্ষিত হিসাবের তালিকা -->
     <div class="card">
-      <h3>📋 আপনার মাসের সম্পূর্ণ হিসাব তালিকা</h3>
+      <h3>📋 আপনার সংরক্ষিত হিসাব তালিকা</h3>
       <div id="ot-history-list">
-        <p style="text-align:center; color:#777;">কোনো হিসাব পাওয়া যায়নি।</p>
+        <p style="text-align:center; color:#777; padding:10px;">কোনো হিসাব পাওয়া যায়নি।</p>
       </div>
     </div>
   </div>
@@ -77,13 +77,13 @@
     <div class="nav-item">📈<br>রিপোর্ট</div>
   </div>
 
-  <!-- হেল্পলাইন বার (আপনার নম্বর সহ) -->
+  <!-- হেল্পলাইন বার -->
   <div class="contact-bar">
     <button class="btn-whatsapp" onclick="openWhatsApp()">💬 হোয়াটসঅ্যাপ সাপোর্ট</button>
     <button class="btn-call" onclick="makeCall()">📞 কল হেল্পলাইন</button>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase JS -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="app.js"></script>
