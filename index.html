@@ -12,7 +12,7 @@
   <!-- লাইভ কাউন্টার সেকশন -->
   <div class="stats-bar">
     <div class="stat-item">🟢 অনলাইন ইউজার: <span id="live-online">1</span></div>
-    <div class="stat-item">👁️ মোট ভিজিটর: <span id="total-visitors">6</span></div>
+    <div class="stat-item">👁️ মোট ভিজিটর: <span id="total-visitors">1</span></div>
   </div>
 
   <!-- অ্যাপ হেডার -->
@@ -23,7 +23,7 @@
   </header>
 
   <div class="container">
-    <!-- তারিখ কার্ড (আগের মূল তারিখ) -->
+    <!-- তারিখ কার্ড -->
     <div class="date-card">
       📅 আজ: <span id="current-date-str">শুক্রবার, ৯ অক্টোবর, ২০২৬</span>
     </div>
@@ -34,11 +34,11 @@
       <div id="login-form">
         <input type="text" id="user-name" value="EMON" placeholder="আপনার নাম">
         <input type="text" id="user-id" value="12373" placeholder="আপনার আইডি">
-        <button onclick="saveUserInfo()">সংরক্ষণ করুন</button>
+        <button class="btn-info" onclick="saveUserInfo()">সংরক্ষণ করুন</button>
       </div>
     </div>
 
-    <!-- মূল হিসাবের কার্ড গ্রিড (৪টি বক্স) -->
+    <!-- মূল হিসাবের কার্ড গ্রিড -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-title">আজকের Duty</div>
@@ -53,13 +53,21 @@
         <div class="stat-value">৳<span id="today-ot-pay">0</span></div>
       </div>
       <div class="stat-card green-card">
-        <div class="stat-title">এই মাসের মোট</div>
+        <div class="stat-title">এই মাসের মোট OT</div>
         <div class="stat-value">৳<span id="month-total">0</span></div>
       </div>
     </div>
 
     <!-- হিসাব যোগ করার বাটন -->
     <button class="btn-primary" onclick="showAddRecordModal()">➕ আজকের হিসাব যোগ করুন</button>
+
+    <!-- কোন তারিখে কত ঘন্টা হিসেব তালিকা -->
+    <div class="card">
+      <h3>📋 আপনার মাসের সম্পূর্ণ হিসাব তালিকা</h3>
+      <div id="ot-history-list">
+        <p style="text-align:center; color:#777;">কোনো হিসাব পাওয়া যায়নি।</p>
+      </div>
+    </div>
   </div>
 
   <!-- বটম নেভিগেশন বার -->
@@ -69,7 +77,7 @@
     <div class="nav-item">📈<br>রিপোর্ট</div>
   </div>
 
-  <!-- হেল্পলাইন বার -->
+  <!-- হেল্পলাইন বার (আপনার নম্বর সহ) -->
   <div class="contact-bar">
     <button class="btn-whatsapp" onclick="openWhatsApp()">💬 হোয়াটসঅ্যাপ সাপোর্ট</button>
     <button class="btn-call" onclick="makeCall()">📞 কল হেল্পলাইন</button>
