@@ -1,206 +1,101 @@
-// Local Storage Keys
-const STORAGE_KEY_ENTRIES = 'reliance_ot_entries';
-const STORAGE_KEY_USER = 'reliance_user_info';
+// Firebase Config Setup
+const firebaseConfig = {
+  apiKey: "AIzaSyCzMYQQ5GldS8CBCz...",
+  authDomain: "reliance-app-1d8f6.firebaseapp.com",
+  databaseURL: "https://reliance-app-1d8f6-default-rtdb.firebaseio.com",
+  projectId: "reliance-app-1d8f6",
+  storageBucket: "reliance-app-1d8f6.appspot.com",
+  messagingSenderId: "800312325129",
+  appId: "1:800312325129:web:ec01...",
+  measurementId: "G-VCMJ9L50M1"
+};
 
-// Initialize App
-document.addEventListener('DOMContentLoaded', () => {
-    initLiveDate();
-    loadUserProfile();
-    renderHomeSummary();
-    
-    // Set default month for report
-    const today = new Date();
-    const currentMonthStr = today.toISOString().slice(0, 7);
-    const reportMonthInput = document.getElementById('report-month-select');
-    if (reportMonthInput) {
-        reportMonthInput.value = currentMonthStr;
-        renderReport();
-    }
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
+// --- ১. লাইভ অনলাইন ইউজার ও ভিজিটর কাউন্টার ---
+const onlineRef = db.ref('presence/' + Date.now());
+const connectedRef = db.ref('.info/connected');
+
+connectedRef.on('value', (snap) => {
+  if (snap.val() === true) {
+    onlineRef.onDisconnect().remove();
+    onlineRef.set(true);
+  }
 });
 
-// Display Live Date and Day
-function initLiveDate() {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const todayStr = new Date().toLocaleDateString('bn-BD', options);
-    const dateElement = document.getElementById('current-date-text');
-    if (dateElement) {
-        dateElement.innerHTML = `<i class="far fa-calendar-alt"></i> আজ: ${todayStr}`;
-    }
-}
+// লাইভ ইউজার আপডেট দেখা
+db.ref('presence').on('value', (snap) => {
+  const count = snap.numChildren();
+  document.getElementById('live-online').innerText = count;
+});
 
-// Save & Load User Profile
-function saveUserProfile() {
-    const name = document.getElementById('user-name-input').value;
-    const id = document.getElementById('user-id-input').value;
-    const userInfo = { name, id };
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(userInfo));
-    updateUserBadge(name, id);
-}
+// মোট ভিজিটর কাউন্টার
+const visitorRef = db.ref('stats/totalVisitors');
+visitorRef.transaction((current) => (current || 0) + 1);
+visitorRef.on('value', (snap) => {
+  document.getElementById('total-visitors').innerText = snap.val() || 0;
+});
 
-function loadUserProfile() {
-    const saved = localStorage.getItem(STORAGE_KEY_USER);
-    if (saved) {
-        const userInfo = JSON.parse(saved);
-        if (document.getElementById('user-name-input')) document.getElementById('user-name-input').value = userInfo.name || '';
-        if (document.getElementById('user-id-input')) document.getElementById('user-id-input').value = userInfo.id || '';
-        updateUserBadge(userInfo.name, userInfo.id);
-    }
-}
+// --- ২. আজীবন অটো-লগইন ব্যবস্থা ---
+window.onload = function() {
+  const savedName = localStorage.getItem('reliance_user_name');
+  const savedId = localStorage.getItem('reliance_user_id');
 
-function updateUserBadge(name, id) {
-    document.getElementById('display-user-name').innerText = name || 'শ্রমিক নাম';
-    document.getElementById('display-user-id').innerText = id ? `ID: ${id}` : 'ID: ---';
-}
+  if (savedName && savedId) {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('user-display').style.display = 'block';
+    document.getElementById('disp-name').innerText = savedName;
+    document.getElementById('disp-id').innerText = savedId;
+  }
+};
 
-// Tab Switching
-function switchTab(tabId, element) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+function saveUserInfo() {
+  const name = document.getElementById('user-name').value;
+  const id = document.getElementById('user-id').value;
+
+  if (name && id) {
+    localStorage.setItem('reliance_user_name', name);
+    localStorage.setItem('reliance_user_id', id);
     
-    document.getElementById(tabId).classList.add('active');
-    element.classList.add('active');
-
-    if (tabId === 'tab-report') {
-        renderReport();
-    }
-}
-
-// Modal Control
-function openEntryModal() {
-    document.getElementById('entry-modal').style.display = 'block';
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('entry-date').value = today;
-    checkFridayLogic();
-}
-
-function closeEntryModal() {
-    document.getElementById('entry-modal').style.display = 'none';
-}
-
-// Auto Friday Logic
-function checkFridayLogic() {
-    const dateVal = document.getElementById('entry-date').value;
-    if (!dateVal) return;
-
-    const selectedDate = new Date(dateVal);
-    const dayOfWeek = selectedDate.getDay(); // 5 = Friday
-    
-    const dayNames = ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"];
-    document.getElementById('day-name-display').innerText = `(${dayNames[dayOfWeek]})`;
-
-    const fridayNotice = document.getElementById('friday-notice');
-    const dutyInput = document.getElementById('entry-duty');
-    const otInput = document.getElementById('entry-ot');
-
-    if (dayOfWeek === 5) { // Friday
-        fridayNotice.style.display = 'block';
-        dutyInput.value = 0; // No basic duty deduction
-        otInput.value = 8;   // Auto 8 Hours OT
-    } else {
-        fridayNotice.style.display = 'none';
-        dutyInput.value = 8;
-        otInput.value = 0;
-    }
-}
-
-// Save Daily Entry
-function saveDailyEntry() {
-    const date = document.getElementById('entry-date').value;
-    const duty = parseFloat(document.getElementById('entry-duty').value) || 0;
-    const ot = parseFloat(document.getElementById('entry-ot').value) || 0;
-
-    if (!date) {
-        alert('অনুগ্রহ করে একটি তারিখ নির্বাচন করুন।');
-        return;
-    }
-
-    let entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
-    entries[date] = { duty, ot };
-    localStorage.setItem(STORAGE_KEY_ENTRIES, JSON.stringify(entries));
-
-    closeEntryModal();
-    renderHomeSummary();
-    alert('হিসাব সফলভাবে সেভ করা হয়েছে!');
-}
-
-// Render Summary on Home Screen
-function renderHomeSummary() {
-    const entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
-    const todayStr = new Date().toISOString().split('T')[0];
-    const currentMonthStr = todayStr.slice(0, 7);
-
-    // Today's Data
-    const todayData = entries[todayStr] || { duty: 0, ot: 0 };
-    document.getElementById('sum-today-duty').innerText = `${todayData.duty} ঘণ্টা`;
-    document.getElementById('sum-today-ot').innerText = `${todayData.ot} ঘণ্টা`;
-
-    // Calculation Rate (Est. 50 Tk per OT hour - adjust as needed)
-    const otRate = 50; 
-    document.getElementById('sum-today-otpay').innerText = `৳${todayData.ot * otRate}`;
-
-    // Monthly Calculation
-    let monthOT = 0;
-    Object.keys(entries).forEach(date => {
-        if (date.startsWith(currentMonthStr)) {
-            monthOT += entries[date].ot || 0;
-        }
+    // ফায়ারবেসে ইউজার সেভ করা
+    db.ref('users/' + id).set({
+      name: name,
+      joinedAt: new Date().toISOString()
     });
 
-    document.getElementById('sum-month-total').innerText = `৳${monthOT * otRate}`;
+    location.reload();
+  } else {
+    alert('দয়া করে নাম এবং আইডি উভয়ই পূরণ করুন।');
+  }
 }
 
-// Calendar Detail
-function loadCalendarDetail() {
-    const selectedDate = document.getElementById('calendar-date-select').value;
-    const entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
-    const detailBox = document.getElementById('calendar-detail');
+// --- ৩. ফিডব্যাক ও সাহায্য পাঠান ---
+function sendFeedback() {
+  const text = document.getElementById('feedback-text').value;
+  const name = localStorage.getItem('reliance_user_name') || 'অজ্ঞাত';
+  const id = localStorage.getItem('reliance_user_id') || 'N/A';
 
-    if (entries[selectedDate]) {
-        const item = entries[selectedDate];
-        detailBox.innerHTML = `
-            <p><strong>তারিখ:</strong> ${selectedDate}</p>
-            <p><strong>ডিউটি:</strong> ${item.duty} ঘণ্টা</p>
-            <p><strong>ওটি (OT):</strong> ${item.ot} ঘণ্টা</p>
-        `;
-    } else {
-        detailBox.innerHTML = `<p class="text-light">এই তারিখে কোনো তথ্য সেভ করা নেই।</p>`;
-    }
-}
-
-// Monthly Report & PDF Generation
-function renderReport() {
-    const selectedMonth = document.getElementById('report-month-select').value;
-    if (!selectedMonth) return;
-
-    const entries = JSON.parse(localStorage.getItem(STORAGE_KEY_ENTRIES) || '{}');
-    let totalDuty = 0;
-    let totalOT = 0;
-
-    Object.keys(entries).forEach(date => {
-        if (date.startsWith(selectedMonth)) {
-            totalDuty += entries[date].duty || 0;
-            totalOT += entries[date].ot || 0;
-        }
+  if (text.trim() !== "") {
+    db.ref('feedbacks').push({
+      userName: name,
+      userId: id,
+      message: text,
+      time: new Date().toLocaleString()
     });
-
-    const otRate = 50; // OT Rate per hour
-    const totalOTPay = totalOT * otRate;
-
-    document.getElementById('rep-duty').innerText = `${totalDuty} ঘণ্টা`;
-    document.getElementById('rep-ot').innerText = `${totalOT} ঘণ্টা`;
-    document.getElementById('rep-otpay').innerText = `৳${totalOTPay}`;
-    document.getElementById('rep-total').innerText = `৳${totalOTPay}`;
+    alert('আপনার বার্তা সফলভাবে পাঠানো হয়েছে!');
+    document.getElementById('feedback-text').value = '';
+  } else {
+    alert('দয়া করে কিছু লিখুন।');
+  }
 }
 
-// Download Report as PDF
-function downloadPDFReport() {
-    const element = document.getElementById('pdf-report-area');
-    const opt = {
-        margin:       10,
-        filename:     'Reliance_Job_OT_Report.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
-}
+// --- ৪. নোটিশ বোর্ড রিয়েলটাইম আপডেট ---
+db.ref('notices/latest').on('value', (snap) => {
+  if (snap.exists()) {
+    document.getElementById('notice-text').innerText = snap.val();
+  }
+});
