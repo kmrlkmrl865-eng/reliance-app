@@ -10,13 +10,12 @@ const firebaseConfig = {
   measurementId: "G-VCMJ9L50M1"
 };
 
-// Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// --- ১. লাইভ কাউন্টার ---
+// ১. লাইভ ইউজার গণনাকারি
 const onlineRef = db.ref('presence/' + Date.now());
 const connectedRef = db.ref('.info/connected');
 
@@ -39,13 +38,16 @@ visitorRef.on('value', (snap) => {
   if (totalEl) totalEl.innerText = snap.val() || 0;
 });
 
-// --- ২. অটো-লগইন এবং ইউজারের তথ্য সংরক্ষণ ---
+// ২. অটো লগইন এবং তথ্য লোড
 window.onload = function() {
   const savedName = localStorage.getItem('reliance_user_name') || 'EMON';
   const savedId = localStorage.getItem('reliance_user_id') || '12373';
 
   updateUserDisplay(savedName, savedId);
   loadUserOTData(savedId);
+
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('current-date-str').innerText = new Date().toLocaleDateString('bn-BD', options);
 };
 
 function updateUserDisplay(name, id) {
@@ -69,15 +71,19 @@ function saveUserInfo() {
     });
 
     updateUserDisplay(name, id);
-    alert('পরিচয় সফলভাবে সংরক্ষণ করা হয়েছে!');
+    alert('পরিচয় সংরক্ষিত হয়েছে!');
     loadUserOTData(id);
   } else {
-    alert('দয়া করে নাম ও আইডি পূরণ করুন।');
+    alert('দয়া করে নাম ও আইডি দিন।');
   }
 }
 
-// --- ৩. আজকের হিসাব যোগ করা (OT Calculator Prompt) ---
+// ৩. তারিখ পরিবর্তনযোগ্য OT হিসাব যোগ করা
 function showAddRecordModal() {
+  const defaultDate = new Date().toISOString().split('T')[0];
+  const inputDate = prompt("তারিখ লিখুন (YYYY-MM-DD):", defaultDate);
+  if (!inputDate) return;
+
   const duty = prompt("আজকের Duty ঘণ্টা লিখুন (যেমন: 8):", "8");
   if (duty === null) return;
 
@@ -92,40 +98,47 @@ function showAddRecordModal() {
   const hourlyRate = parseFloat(rate) || 0;
   const otPay = otHours * hourlyRate;
 
-  // স্ক্রিনে ইনস্ট্যান্ট আপডেট দেখানো
+  // স্ক্রিনে আপডেট
   document.getElementById('today-duty').innerText = dutyHours;
   document.getElementById('today-ot').innerText = otHours;
   document.getElementById('today-ot-pay').innerText = otPay;
 
-  // ডাটাবেসে সেভ করা
   const userId = localStorage.getItem('reliance_user_id') || '12373';
-  const todayKey = new Date().toISOString().split('T')[0];
 
-  db.ref('ot_records/' + userId + '/' + todayKey).set({
-    date: todayKey,
+  db.ref('ot_records/' + userId + '/' + inputDate).set({
+    date: inputDate,
     duty: dutyHours,
     ot: otHours,
     otPay: otPay,
     rate: hourlyRate,
     timestamp: Date.now()
   }).then(() => {
-    alert('আজকের হিসাব সফলভাবে জমা হয়েছে!');
+    alert('হিসাব সফলভাবে সেভ করা হয়েছে!');
     loadUserOTData(userId);
-  }).catch((err) => {
-    alert('হিসাব সেভ হতে সমস্যা হয়েছে: ' + err.message);
   });
 }
 
-// --- ৪. ইউজারের OT হিসাব লোড করা ---
+// ৪. সংরক্ষিত সকল ডাটা লোড করা
 function loadUserOTData(userId) {
   db.ref('ot_records/' + userId).on('value', (snap) => {
-    let totalMonth = 0;
+    let totalMonthMoney = 0;
     const todayKey = new Date().toISOString().split('T')[0];
+
+    let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:13px; margin-top:8px;">';
+    historyHTML += '<tr style="background:#0284c7; color:white;"><th>তারিখ</th><th>ডিউটি</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
 
     if (snap.exists()) {
       snap.forEach((child) => {
         const item = child.val();
-        totalMonth += (item.otPay || 0);
+        totalMonthMoney += (item.otPay || 0);
+
+        historyHTML += `<tr>
+          <td style="padding:6px;">${item.date}</td>
+          <td>${item.duty} ঘণ্টা</td>
+          <td>${item.ot} ঘণ্টা</td>
+          <td>৳${item.rate}</td>
+          <td>৳${item.otPay}</td>
+        </tr>`;
 
         if (child.key === todayKey) {
           document.getElementById('today-duty').innerText = item.duty || 0;
@@ -133,43 +146,22 @@ function loadUserOTData(userId) {
           document.getElementById('today-ot-pay').innerText = item.otPay || 0;
         }
       });
+      historyHTML += '</table>';
+    } else {
+      historyHTML = '<p style="text-align:center; color:#777; padding:10px;">এখনো কোনো সেভ করা হিসাব নেই।</p>';
     }
-    document.getElementById('month-total').innerText = totalMonth;
+
+    document.getElementById('month-total').innerText = totalMonthMoney;
+    document.getElementById('ot-history-list').innerHTML = historyHTML;
   });
 }
 
-// --- ৫. কল ও হোয়াটসঅ্যাপ হেল্পলাইন ---
+// ৫. কল ও হোয়াটসঅ্যাপ বাটন
 function makeCall() {
-  window.location.href = "tel:01700000000"; // এখানে আপনার সঠিক মোবাইল নম্বর দিন
+  window.location.href = "tel:01734883213";
 }
 
 function openWhatsApp() {
-  window.location.href = "https://wa.me/8801700000000"; // এখানে আপনার হোয়াটসঅ্যাপ নম্বর দিন
+  window.location.href = "https://wa.me/8801734883213";
 }
 
-// --- ৬. ফিডব্যাক পাঠানো ---
-function sendFeedback() {
-  const text = document.getElementById('feedback-text').value;
-  const name = localStorage.getItem('reliance_user_name') || 'EMON';
-  const id = localStorage.getItem('reliance_user_id') || '12373';
-
-  if (text.trim() !== "") {
-    db.ref('feedbacks').push({
-      userName: name,
-      userId: id,
-      message: text,
-      time: new Date().toLocaleString()
-    });
-    alert('আপনার মেসেজ সফলভাবে পাঠানো হয়েছে!');
-    document.getElementById('feedback-text').value = '';
-  } else {
-    alert('দয়া করে কিছু লিখুন।');
-  }
-}
-
-// --- ৭. নোটিশ আপডেট ---
-db.ref('notices/latest').on('value', (snap) => {
-  if (snap.exists()) {
-    document.getElementById('notice-text').innerText = snap.val();
-  }
-});
