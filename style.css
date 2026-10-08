@@ -2,75 +2,201 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: Arial, sans-serif;
 }
 
 body {
-  background-color: #f4f7f6;
+  background-color: #f0f4f8;
   color: #333;
-  padding: 15px;
+  padding-bottom: 120px;
 }
 
+/* লাইভ কাউন্টার */
 .stats-bar {
   display: flex;
   justify-content: space-between;
   background: #1e293b;
   color: #fff;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 8px 15px;
+  font-size: 13px;
+}
+
+/* প্রফেশনাল ব্লু হেডার */
+.app-header {
+  background: linear-gradient(135deg, #0f4c81, #1e5f9e);
+  color: white;
+  text-align: center;
+  padding: 20px 15px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.app-header h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.app-header .sub-title {
+  font-size: 12px;
+  letter-spacing: 1px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.user-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 13px;
+}
+
+.container {
+  padding: 15px;
+}
+
+.date-card {
+  background: #e0f2fe;
+  color: #0369a1;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: bold;
   margin-bottom: 15px;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-header h1 {
-  color: #0284c7;
-  font-size: 24px;
-}
-
 .card {
-  background: #ffffff;
+  background: white;
   padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   margin-bottom: 15px;
 }
 
 .card h3 {
-  color: #0f172a;
+  font-size: 16px;
   margin-bottom: 10px;
-  font-size: 18px;
+  color: #1e293b;
 }
 
 input, textarea {
   width: 100%;
   padding: 10px;
-  margin-top: 8px;
-  margin-bottom: 12px;
+  margin-top: 6px;
+  margin-bottom: 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
 }
 
-button {
-  width: 100%;
-  background-color: #0284c7;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
+/* ৪টি মূল হিসাবের গ্রিড */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 15px;
 }
 
-button:hover {
-  background-color: #0369a1;
+.stat-card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 4px solid #0284c7;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.stat-card.green-card {
+  border-left-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.stat-title {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #0f172a;
+}
+
+/* বাটনসমূহ */
+.btn-primary {
+  width: 100%;
+  background: #1d68a7;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.btn-info {
+  width: 100%;
+  background: #0284c7;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.btn-secondary {
+  width: 100%;
+  background: #0284c7;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+/* বটম নেভিগেশন ও কন্টাক্ট বার */
+.bottom-nav {
+  position: fixed;
+  bottom: 50px;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  border-top: 1px solid #e2e8f0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.contact-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  height: 50px;
+}
+
+.btn-whatsapp {
+  width: 50%;
+  background: #25d366;
+  color: white;
+  border: none;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.btn-call {
+  width: 50%;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  font-weight: bold;
+  font-size: 13px;
 }
 
 #notice-text {
@@ -78,5 +204,6 @@ button:hover {
   color: #92400e;
   padding: 10px;
   border-left: 4px solid #f59e0b;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 13px;
 }
