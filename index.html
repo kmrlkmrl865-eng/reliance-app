@@ -15,42 +15,84 @@
     <div class="stat-item">👁️ মোট ভিজিটর: <span id="total-visitors">0</span></div>
   </div>
 
-  <header>
-    <h1>Reliance Job & OT</h1>
+  <!-- অ্যাপ হেডার -->
+  <header class="app-header">
+    <h2>🕒 Reliance Job & OT</h2>
+    <p class="sub-title">RELIANCE DRESSES LIMITED</p>
+    <div class="user-badge"><span id="disp-badge-name">EMON</span> (ID: <span id="disp-badge-id">12373</span>)</div>
   </header>
 
-  <!-- ইউজার প্রোফাইল / অটো-লগইন কার্ড -->
-  <div class="card" id="user-card">
-    <h3>👤 ব্যবহারকারীর তথ্য</h3>
-    <div id="login-form">
-      <input type="text" id="user-name" placeholder="আপনার নাম লিখুন">
-      <input type="text" id="user-id" placeholder="আপনার আইডি লিখুন">
-      <button onclick="saveUserInfo()">সংরক্ষণ করুন</button>
+  <div class="container">
+    <!-- তারিখ কার্ড -->
+    <div class="date-card">
+      📅 আজ: <span id="current-date-str">বৃহস্পতিবার, ৮ অক্টোবর, ২০২৬</span>
     </div>
-    <div id="user-display" style="display:none;">
-      <p><strong>নাম:</strong> <span id="disp-name"></span></p>
-      <p><strong>আইডি:</strong> <span id="disp-id"></span></p>
+
+    <!-- পরিচয় ইনপুট কার্ড -->
+    <div class="card" id="user-card">
+      <h3>✍️ আপনার পরিচয় ইনপুট দিন</h3>
+      <div id="login-form">
+        <input type="text" id="user-name" value="EMON" placeholder="আপনার নাম">
+        <input type="text" id="user-id" value="12373" placeholder="আপনার আইডি">
+        <button onclick="saveUserInfo()">সংরক্ষণ করুন</button>
+      </div>
+    </div>
+
+    <!-- মূল হিসাবের কার্ড গ্রিড (আগের ৪টি মূল বক্স) -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">আজকের Duty</div>
+        <div class="stat-value"><span id="today-duty">0</span> ঘণ্টা</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">আজকের OT</div>
+        <div class="stat-value"><span id="today-ot">0</span> ঘণ্টা</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">আজকের OT পে</div>
+        <div class="stat-value">৳<span id="today-ot-pay">0</span></div>
+      </div>
+      <div class="stat-card green-card">
+        <div class="stat-title">এই মাসের মোট</div>
+        <div class="stat-value">৳<span id="month-total">0</span></div>
+      </div>
+    </div>
+
+    <!-- হিসাব যোগ করার বাটন -->
+    <button class="btn-primary" onclick="showAddRecordModal()">➕ আজকের হিসাব যোগ করুন</button>
+
+    <!-- নোটিশ বোর্ড -->
+    <div class="card" id="notice-board">
+      <h3>📢 নোটিশ বোর্ড ও আপডেট</h3>
+      <p id="notice-text">কোনো নতুন নোটিশ নেই।</p>
+    </div>
+
+    <!-- গার্মেন্টস তথ্য ও ক্যারিয়ার গাইড -->
+    <div class="card">
+      <h3>🧵 গার্মেন্টস তথ্য ও ক্যারিয়ার গাইড</h3>
+      <p style="font-size: 13px; color: #666; margin-bottom: 10px;">গার্মেন্টস সেক্টরের অজানা তথ্য, সেকশন গাইড ও স্কিপ টিপস জানতে নিচে ক্লিক করুন।</p>
+      <button class="btn-info" onclick="alert('গাইড সেকশন শীঘ্রই আসছে!')">গাইড দেখুন</button>
+    </div>
+
+    <!-- ভুল সংশোধন বা সাহায্য 요청 -->
+    <div class="card">
+      <h3>💬 সাহায্য ও ফিডব্যাক</h3>
+      <textarea id="feedback-text" placeholder="ভুল সংশোধন বা লোক লাগলে এখানে লিখুন..."></textarea>
+      <button class="btn-secondary" onclick="sendFeedback()">পাঠান</button>
     </div>
   </div>
 
-  <!-- নোটিশ বোর্ড সেকশন -->
-  <div class="card" id="notice-board">
-    <h3>📢 নোটিশ বোর্ড ও আপডেট</h3>
-    <p id="notice-text">কোনো নতুন নোটিশ নেই।</p>
+  <!-- বটম নেভিগেশন বার -->
+  <div class="bottom-nav">
+    <div class="nav-item active">🏠<br>হোম</div>
+    <div class="nav-item">📅<br>ক্যালেন্ডার</div>
+    <div class="nav-item">📈<br>রিপোর্ট</div>
   </div>
 
-  <!-- গার্মেন্টস তথ্য ও ক্যারিয়ার গাইড -->
-  <div class="card">
-    <h3>🧵 গার্মেন্টস তথ্য ও ক্যারিয়ার গাইড</h3>
-    <p>গার্মেন্টস সেক্টরের অজানা তথ্য, সেকশন গাইড ও স্কিপ টিপস জানতে নিচে ক্লিক করুন।</p>
-    <button onclick="alert('গাইড সেকশন শীঘ্রই আপডেট করা হচ্ছে!')">গাইড দেখুন</button>
-  </div>
-
-  <!-- লোক লাগবে / ভুল সংশোধনের ফিডব্যাক -->
-  <div class="card">
-    <h3>💬 সাহায্য ও ফিডব্যাক</h3>
-    <textarea id="feedback-text" placeholder="ভুল সংশোধন বা লোক লাগলে এখানে লিখুন..."></textarea>
-    <button onclick="sendFeedback()">পাঠান</button>
+  <!-- হেল্পলাইন বার -->
+  <div class="contact-bar">
+    <a href="#" class="btn-whatsapp">💬 হোয়াটসঅ্যাপ সাপোর্ট</a>
+    <a href="#" class="btn-call">📞 কল হেল্পলাইন</a>
   </div>
 
   <!-- Firebase SDK -->
