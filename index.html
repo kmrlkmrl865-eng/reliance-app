@@ -1,145 +1,61 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reliance Job & OT</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a365d">
-    <!-- FontAwesome Icons for Help & WhatsApp -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- html2pdf Library for PDF Report Download -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reliance Job & OT</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="app-header">
-        <h1><i class="fas fa-clock"></i> Reliance Job & OT</h1>
-        <p class="company-name">RELIANCE DRESSES LIMITED</p>
-        <div class="user-badge" id="user-badge-display">
-            <span id="display-user-name">শ্রমিক নাম</span> (<span id="display-user-id">ID: ---</span>)
-        </div>
-    </header>
+  <!-- লাইভ কাউন্টার সেকশন -->
+  <div class="stats-bar">
+    <div class="stat-item">🟢 অনলাইন ইউজার: <span id="live-online">0</span></div>
+    <div class="stat-item">👁️ মোট ভিজিটর: <span id="total-visitors">0</span></div>
+  </div>
 
-    <!-- Main Content Screens -->
-    <main id="app-content">
+  <header>
+    <h1>Reliance Job & OT</h1>
+  </header>
 
-        <!-- HOME TAB -->
-        <section id="tab-home" class="tab-content active">
-            <div class="card date-card">
-                <span id="current-date-text"><i class="far fa-calendar-alt"></i> আজকের তারিখ: লোড হচ্ছে...</span>
-            </div>
-
-            <!-- Profile Input Form -->
-            <div class="card profile-card">
-                <h3><i class="fas fa-user-edit"></i> আপনার পরিচয় ইনপুট দিন</h3>
-                <div class="form-group">
-                    <input type="text" id="user-name-input" placeholder="আপনার নাম লিখুন" class="form-control" onchange="saveUserProfile()">
-                    <input type="text" id="user-id-input" placeholder="কার্ড / আইডি নম্বর" class="form-control mt-5" onchange="saveUserProfile()">
-                </div>
-            </div>
-
-            <!-- Summary Dashboard -->
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <h4>আজকের Duty</h4>
-                    <p id="sum-today-duty">০ ঘণ্টা</p>
-                </div>
-                <div class="summary-card">
-                    <h4>আজকের OT</h4>
-                    <p id="sum-today-ot">০ ঘণ্টা</p>
-                </div>
-                <div class="summary-card">
-                    <h4>আজকের OT পে</h4>
-                    <p id="sum-today-otpay">৳০</p>
-                </div>
-                <div class="summary-card highlight">
-                    <h4>এই মাসের মোট</h4>
-                    <p id="sum-month-total">৳০</p>
-                </div>
-            </div>
-
-            <button class="btn btn-primary btn-large mt-15" onclick="openEntryModal()"><i class="fas fa-plus-circle"></i> আজকের হিসাব যোগ করুন</button>
-        </section>
-
-        <!-- CALENDAR TAB -->
-        <section id="tab-calendar" class="tab-content">
-            <div class="card">
-                <h3><i class="fas fa-calendar-check"></i> ক্যালেন্ডার ও উপস্থিতি</h3>
-                <input type="date" id="calendar-date-select" class="form-control" onchange="loadCalendarDetail()">
-                <div id="calendar-detail" class="detail-box mt-15">
-                    <p>একটি তারিখ নির্বাচন করুন।</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- REPORT TAB -->
-        <section id="tab-report" class="tab-content">
-            <div class="card" id="pdf-report-area">
-                <h3><i class="fas fa-file-invoice-dollar"></i> মাসিক রিপোর্ট ও পে-স্লিপ</h3>
-                <input type="month" id="report-month-select" class="form-control" onchange="renderReport()">
-                
-                <div class="report-summary mt-15">
-                    <p><strong>মোট Duty Hours:</strong> <span id="rep-duty">০ ঘণ্টা</span></p>
-                    <p><strong>মোট OT Hours:</strong> <span id="rep-ot">০ ঘণ্টা</span></p>
-                    <p><strong>Basic Salary:</strong> <span id="rep-basic">৳০</span></p>
-                    <p><strong>মোট OT Pay:</strong> <span id="rep-otpay">৳০</span></p>
-                    <p><strong>অন্যান্য/অ্যাডভান্স:</strong> <span id="rep-other">৳০</span></p>
-                    <hr>
-                    <h4 class="text-success">সর্বমোট প্রাপ্য: <span id="rep-total">৳০</span></h4>
-                </div>
-            </div>
-            <button class="btn btn-secondary btn-large mt-15" onclick="downloadPDFReport()"><i class="fas fa-file-pdf"></i> পে-স্লিপ PDF ডাউনলোড করুন</button>
-        </section>
-
-    </main>
-
-    <!-- Entry Modal -->
-    <div id="entry-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeEntryModal()">&times;</span>
-            <h3 id="modal-date-title"><i class="fas fa-edit"></i> হিসাব ইনপুট</h3>
-            
-            <div class="form-group mt-10">
-                <label>তারিখ:</label>
-                <input type="date" id="entry-date" class="form-control" onchange="checkFridayLogic()">
-                <small id="day-name-display" class="day-badge"></small>
-            </div>
-
-            <div class="form-group mt-10">
-                <label>ডিউটি ঘণ্টা (Duty Hours):</label>
-                <input type="number" id="entry-duty" class="form-control" placeholder="যেমন: 8" value="8">
-            </div>
-
-            <div class="form-group mt-10">
-                <label>ওটি ঘণ্টা (OT Hours):</label>
-                <input type="number" id="entry-ot" class="form-control" placeholder="যেমন: 2" value="0">
-                <small id="friday-notice" class="text-warning" style="display:none;"><i class="fas fa-star"></i> শুক্রবার ছুটির দিন! সম্পূর্ণ ৮ ঘণ্টা সরাসরি OT হিসেবে যোগ হবে।</small>
-            </div>
-
-            <button class="btn btn-primary btn-large mt-15" onclick="saveDailyEntry()"><i class="fas fa-save"></i> সেভ করুন</button>
-        </div>
+  <!-- ইউজার প্রোফাইল / অটো-লগইন কার্ড -->
+  <div class="card" id="user-card">
+    <h3>👤 ব্যবহারকারীর তথ্য</h3>
+    <div id="login-form">
+      <input type="text" id="user-name" placeholder="আপনার নাম লিখুন">
+      <input type="text" id="user-id" placeholder="আপনার আইডি লিখুন">
+      <button onclick="saveUserInfo()">সংরক্ষণ করুন</button>
     </div>
-
-    <!-- Navigation Bar -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fas fa-home"></i><span>হোম</span></button>
-        <button class="nav-item" onclick="switchTab('tab-calendar', this)"><i class="fas fa-calendar-alt"></i><span>ক্যালেন্ডার</span></button>
-        <button class="nav-item" onclick="switchTab('tab-report', this)"><i class="fas fa-chart-line"></i><span>রিপোর্ট</span></button>
-    </nav>
-
-    <!-- Floating Help & WhatsApp Helpline Bar -->
-    <div class="helpline-bar">
-        <a href="https://wa.me/8801734883213" target="_blank" class="helpline-btn whatsapp-btn">
-            <i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ সাপোর্ট
-        </a>
-        <a href="tel:01734883213" class="helpline-btn call-btn">
-            <i class="fas fa-phone-alt"></i> কল হেল্পলাইন
-        </a>
+    <div id="user-display" style="display:none;">
+      <p><strong>নাম:</strong> <span id="disp-name"></span></p>
+      <p><strong>আইডি:</strong> <span id="disp-id"></span></p>
     </div>
+  </div>
 
-    <script src="app.js"></script>
+  <!-- নোটিশ বোর্ড সেকশন -->
+  <div class="card" id="notice-board">
+    <h3>📢 নোটিশ বোর্ড ও আপডেট</h3>
+    <p id="notice-text">কোনো নতুন নোটিশ নেই।</p>
+  </div>
+
+  <!-- গার্মেন্টস তথ্য ও ক্যারিয়ার গাইড -->
+  <div class="card">
+    <h3>🧵 গার্মেন্টস তথ্য ও ক্যারিয়ার গাইড</h3>
+    <p>গার্মেন্টস সেক্টরের অজানা তথ্য, সেকশন গাইড ও স্কিপ টিপস জানতে নিচে ক্লিক করুন।</p>
+    <button onclick="alert('গাইড সেকশন শীঘ্রই আপডেট করা হচ্ছে!')">গাইড দেখুন</button>
+  </div>
+
+  <!-- লোক লাগবে / ভুল সংশোধনের ফিডব্যাক -->
+  <div class="card">
+    <h3>💬 সাহায্য ও ফিডব্যাক</h3>
+    <textarea id="feedback-text" placeholder="ভুল সংশোধন বা লোক লাগলে এখানে লিখুন..."></textarea>
+    <button onclick="sendFeedback()">পাঠান</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
