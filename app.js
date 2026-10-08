@@ -1,167 +1,119 @@
-// Firebase Config Setup
-const firebaseConfig = {
-  apiKey: "AIzaSyCzMYQQ5GldS8CBCz...",
-  authDomain: "reliance-app-1d8f6.firebaseapp.com",
-  databaseURL: "https://reliance-app-1d8f6-default-rtdb.firebaseio.com",
-  projectId: "reliance-app-1d8f6",
-  storageBucket: "reliance-app-1d8f6.appspot.com",
-  messagingSenderId: "800312325129",
-  appId: "1:800312325129:web:ec01...",
-  measurementId: "G-VCMJ9L50M1"
-};
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reliance Job & OT</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
+  <!-- লাইভ ইউজার কাউন্টার -->
+  <div class="stats-bar">
+    <div class="stat-item">🟢 অনলাইন ইউজার: <span id="live-online">1</span></div>
+    <div class="stat-item">👁️ মোট ভিজিটর: <span id="total-visitors">1</span></div>
+  </div>
 
-// ১. লাইভ ইউজার গণনাকারি
-const onlineRef = db.ref('presence/' + Date.now());
-const connectedRef = db.ref('.info/connected');
+  <!-- অ্যাপ হেডার -->
+  <header class="app-header">
+    <h2>🕒 Reliance Job & OT</h2>
+    <p class="sub-title">RELIANCE DRESSES LIMITED</p>
+    <div class="user-badge"><span id="disp-badge-name">EMON</span> (ID: <span id="disp-badge-id">12373</span>)</div>
+  </header>
 
-connectedRef.on('value', (snap) => {
-  if (snap.val() === true) {
-    onlineRef.onDisconnect().remove();
-    onlineRef.set(true);
-  }
-});
+  <div class="container">
+    <!-- তারিখ প্রদর্শন -->
+    <div class="date-card">
+      📅 আজ: <span id="current-date-str">শুক্রবার, ৯ অক্টোবর, ২০২৬</span>
+    </div>
 
-db.ref('presence').on('value', (snap) => {
-  const onlineEl = document.getElementById('live-online');
-  if (onlineEl) onlineEl.innerText = snap.numChildren();
-});
+    <!-- ১. হোম ট্যাব -->
+    <div id="tab-home" class="tab-page">
+      <!-- পরিচয় ও বেতন ইনপুট কার্ড -->
+      <div class="card" id="user-card">
+        <h3>✍️ আপনার পরিচয় ও বেতন ইনপুট দিন</h3>
+        <div id="login-form">
+          <input type="text" id="user-name" value="EMON" placeholder="আপনার নাম">
+          <input type="text" id="user-id" value="12373" placeholder="আপনার আইডি">
+          <input type="number" id="user-basic" placeholder="মূল/বেসিক বেতন (টাকা)">
+          <input type="number" id="user-allowance" placeholder="সরকারি/অন্যান্য ভাতা (টাকা)">
+          <button class="btn-info" onclick="saveUserInfo()">সংরক্ষণ করুন</button>
+        </div>
+      </div>
 
-const visitorRef = db.ref('stats/totalVisitors');
-visitorRef.transaction((current) => (current || 0) + 1);
-visitorRef.on('value', (snap) => {
-  const totalEl = document.getElementById('total-visitors');
-  if (totalEl) totalEl.innerText = snap.val() || 0;
-});
+      <!-- মূল ৪টি হিসাবের কার্ড -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">আজকের Duty</div>
+          <div class="stat-value"><span id="today-duty">0</span> ঘণ্টা</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">আজকের OT</div>
+          <div class="stat-value"><span id="today-ot">0</span> ঘণ্টা</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">আজকের OT পে</div>
+          <div class="stat-value">৳<span id="today-ot-pay">0</span></div>
+        </div>
+        <div class="stat-card green-card">
+          <div class="stat-title">এই মাসের মোট OT</div>
+          <div class="stat-value">৳<span id="month-total">0</span></div>
+        </div>
+      </div>
 
-// ২. অটো লগইন এবং তথ্য লোড
-window.onload = function() {
-  const savedName = localStorage.getItem('reliance_user_name') || 'EMON';
-  const savedId = localStorage.getItem('reliance_user_id') || '12373';
+      <!-- হিসাব যোগ করার বাটন -->
+      <button class="btn-primary" onclick="showAddRecordModal()">➕ আজকের হিসাব যোগ করুন</button>
 
-  updateUserDisplay(savedName, savedId);
-  loadUserOTData(savedId);
+      <!-- তারিখ অনুযায়ী সংরক্ষিত হিসাবের তালিকা -->
+      <div class="card">
+        <h3>📋 আপনার সংরক্ষিত হিসাব তালিকা</h3>
+        <div id="ot-history-list">
+          <p style="text-align:center; color:#777; padding:10px;">কোনো হিসাব পাওয়া যায়নি।</p>
+        </div>
+      </div>
+    </div>
 
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById('current-date-str').innerText = new Date().toLocaleDateString('bn-BD', options);
-};
+    <!-- ২. ক্যালেন্ডার ট্যাব -->
+    <div id="tab-calendar" class="tab-page" style="display:none;">
+      <div class="card">
+        <h3>📅 মাসিক ক্যালেন্ডার হিসাব</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:10px;">এখানে আপনার প্রতিদিনের ডিউটি ও ওটি জমা থাকবে।</p>
+        <div id="calendar-history-list"></div>
+      </div>
+    </div>
 
-function updateUserDisplay(name, id) {
-  document.getElementById('disp-badge-name').innerText = name;
-  document.getElementById('disp-badge-id').innerText = id;
-  document.getElementById('user-name').value = name;
-  document.getElementById('user-id').value = id;
-}
+    <!-- ৩. রিপোর্ট ট্যাব (মাসিক হিসাব ও মোট বেতন) -->
+    <div id="tab-report" class="tab-page" style="display:none;">
+      <div class="card">
+        <h3>📊 মাসিক বেতনের বিস্তারিত রিপোর্ট</h3>
+        <div style="line-height:2; font-size:14px;">
+          <p><strong>মূল/বেসিক বেতন:</strong> ৳<span id="rep-basic">0</span></p>
+          <p><strong>সরকারি/অন্যান্য ভাতা:</strong> ৳<span id="rep-allowance">0</span></p>
+          <p><strong>মোট ওটি (OT) টাকা:</strong> ৳<span id="rep-ot-pay">0</span></p>
+          <hr style="margin:10px 0; border:0; border-top:1px solid #ddd;">
+          <h3 style="color:#16a34a;">সর্বমোট প্রাক্কলিত বেতন: ৳<span id="rep-total-salary">0</span></h3>
+        </div>
+      </div>
+    </div>
+  </div>
 
-function saveUserInfo() {
-  const name = document.getElementById('user-name').value;
-  const id = document.getElementById('user-id').value;
+  <!-- বটম নেভিগেশন বার -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('home', this)">🏠<br>হোম</div>
+    <div class="nav-item" onclick="switchTab('calendar', this)">📅<br>ক্যালেন্ডার</div>
+    <div class="nav-item" onclick="switchTab('report', this)">📈<br>রিপোর্ট</div>
+  </div>
 
-  if (name && id) {
-    localStorage.setItem('reliance_user_name', name);
-    localStorage.setItem('reliance_user_id', id);
+  <!-- হেল্পলাইন বার -->
+  <div class="contact-bar">
+    <button class="btn-whatsapp" onclick="openWhatsApp()">💬 হোয়াটসঅ্যাপ সাপোর্ট</button>
+    <button class="btn-call" onclick="makeCall()">📞 কল হেল্পলাইন</button>
+  </div>
 
-    db.ref('users/' + id).set({
-      name: name,
-      updatedAt: new Date().toISOString()
-    });
-
-    updateUserDisplay(name, id);
-    alert('পরিচয় সংরক্ষিত হয়েছে!');
-    loadUserOTData(id);
-  } else {
-    alert('দয়া করে নাম ও আইডি দিন।');
-  }
-}
-
-// ৩. তারিখ পরিবর্তনযোগ্য OT হিসাব যোগ করা
-function showAddRecordModal() {
-  const defaultDate = new Date().toISOString().split('T')[0];
-  const inputDate = prompt("তারিখ লিখুন (YYYY-MM-DD):", defaultDate);
-  if (!inputDate) return;
-
-  const duty = prompt("আজকের Duty ঘণ্টা লিখুন (যেমন: 8):", "8");
-  if (duty === null) return;
-
-  const ot = prompt("আজকের OT ঘণ্টা লিখুন (যেমন: 2 বা 3.5):", "2");
-  if (ot === null) return;
-
-  const rate = prompt("প্রতি ঘণ্টা OT রেট (টাকা):", "60");
-  if (rate === null) return;
-
-  const dutyHours = parseFloat(duty) || 0;
-  const otHours = parseFloat(ot) || 0;
-  const hourlyRate = parseFloat(rate) || 0;
-  const otPay = otHours * hourlyRate;
-
-  // স্ক্রিনে আপডেট
-  document.getElementById('today-duty').innerText = dutyHours;
-  document.getElementById('today-ot').innerText = otHours;
-  document.getElementById('today-ot-pay').innerText = otPay;
-
-  const userId = localStorage.getItem('reliance_user_id') || '12373';
-
-  db.ref('ot_records/' + userId + '/' + inputDate).set({
-    date: inputDate,
-    duty: dutyHours,
-    ot: otHours,
-    otPay: otPay,
-    rate: hourlyRate,
-    timestamp: Date.now()
-  }).then(() => {
-    alert('হিসাব সফলভাবে সেভ করা হয়েছে!');
-    loadUserOTData(userId);
-  });
-}
-
-// ৪. সংরক্ষিত সকল ডাটা লোড করা
-function loadUserOTData(userId) {
-  db.ref('ot_records/' + userId).on('value', (snap) => {
-    let totalMonthMoney = 0;
-    const todayKey = new Date().toISOString().split('T')[0];
-
-    let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:13px; margin-top:8px;">';
-    historyHTML += '<tr style="background:#0284c7; color:white;"><th>তারিখ</th><th>ডিউটি</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
-
-    if (snap.exists()) {
-      snap.forEach((child) => {
-        const item = child.val();
-        totalMonthMoney += (item.otPay || 0);
-
-        historyHTML += `<tr>
-          <td style="padding:6px;">${item.date}</td>
-          <td>${item.duty} ঘণ্টা</td>
-          <td>${item.ot} ঘণ্টা</td>
-          <td>৳${item.rate}</td>
-          <td>৳${item.otPay}</td>
-        </tr>`;
-
-        if (child.key === todayKey) {
-          document.getElementById('today-duty').innerText = item.duty || 0;
-          document.getElementById('today-ot').innerText = item.ot || 0;
-          document.getElementById('today-ot-pay').innerText = item.otPay || 0;
-        }
-      });
-      historyHTML += '</table>';
-    } else {
-      historyHTML = '<p style="text-align:center; color:#777; padding:10px;">এখনো কোনো সেভ করা হিসাব নেই।</p>';
-    }
-
-    document.getElementById('month-total').innerText = totalMonthMoney;
-    document.getElementById('ot-history-list').innerHTML = historyHTML;
-  });
-}
-
-// ৫. কল ও হোয়াটসঅ্যাপ বাটন
-function makeCall() {
-  window.location.href = "tel:01734883213";
-}
-
-function openWhatsApp() {
-  window.location.href = "https://wa.me/8801734883213";
-}
-
+  <!-- Firebase JS -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
