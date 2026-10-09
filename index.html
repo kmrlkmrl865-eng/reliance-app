@@ -6,6 +6,7 @@
   <title>Reliance Job & OT</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#15803d">
 </head>
 <body>
 
@@ -30,7 +31,7 @@
 
       <!-- পরিচয় ইনপুট কার্ড -->
       <div class="card" id="user-card">
-        <h3>✍️ আপনার পরিচয় ఇన్പുট দিন</h3>
+        <h3>✍️ আপনার পরিচয় ইনপুট দিন</h3>
         <div id="login-form">
           <input type="text" id="user-name" value="EMON" placeholder="আপনার নাম">
           <input type="text" id="user-id" value="12373" placeholder="আপনার আইডি">
@@ -78,7 +79,7 @@
       </div>
     </div>
 
-    <!-- ৩. মাসিক রিপোর্ট ট্যাব (আপনার স্ক্রিনশটের মতো হুবহু) -->
+    <!-- ৩. মাসিক রিপোর্ট ট্যাব -->
     <div id="tab-report" class="tab-page" style="display:none;">
       <div class="card report-card">
         <h3>মাসিক রিপোর্ট</h3>
@@ -109,7 +110,7 @@
     </div>
   </div>
 
-  <!-- 🔲 দৈনিক হিসাব যোগ করার সুন্দর পপ-আপ ফর্ম (Modal) -->
+  <!-- 🔲 দৈনিক হিসাব যোগ করার পপ-আপ ফর্ম -->
   <div id="addModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -152,7 +153,7 @@
   <div class="contact-bar">
     <button class="btn-whatsapp" onclick="openWhatsApp()">💬 হোয়াটসঅ্যাপ সাপোর্ট</button>
     <button class="btn-call" onclick="makeCall()">📞 কল হেল্পলাইন</button>
-  </div>01734883213
+  </div>
 
   <!-- Firebase JS -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
