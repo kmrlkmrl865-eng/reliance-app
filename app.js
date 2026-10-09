@@ -1,3 +1,12 @@
+// ⚡ অফলাইন সার্ভিস ওয়ার্কার রেজিস্টার করুন
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker Registered!', reg))
+      .catch(err => console.log('Service Worker Failed!', err));
+  });
+}
+
 // Firebase Config Setup
 const firebaseConfig = {
   apiKey: "AIzaSyCzMYQQ5GldS8CBCz...",
@@ -10,33 +19,39 @@ const firebaseConfig = {
   measurementId: "G-VCMJ9L50M1"
 };
 
-if (!firebase.apps.length) {
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
-const db = firebase.database();
 
-// ১. লাইভ ইউজার
-const onlineRef = db.ref('presence/' + Date.now());
-const connectedRef = db.ref('.info/connected');
+let db = null;
+if (typeof firebase !== 'undefined') {
+  db = firebase.database();
+}
 
-connectedRef.on('value', (snap) => {
-  if (snap.val() === true) {
-    onlineRef.onDisconnect().remove();
-    onlineRef.set(true);
-  }
-});
+// ১. লাইভ ইউজার (অনলাইনে থাকলে)
+if (db) {
+  const onlineRef = db.ref('presence/' + Date.now());
+  const connectedRef = db.ref('.info/connected');
 
-db.ref('presence').on('value', (snap) => {
-  const onlineEl = document.getElementById('live-online');
-  if (onlineEl) onlineEl.innerText = snap.numChildren();
-});
+  connectedRef.on('value', (snap) => {
+    if (snap.val() === true) {
+      onlineRef.onDisconnect().remove();
+      onlineRef.set(true);
+    }
+  });
 
-const visitorRef = db.ref('stats/totalVisitors');
-visitorRef.transaction((current) => (current || 0) + 1);
-visitorRef.on('value', (snap) => {
-  const totalEl = document.getElementById('total-visitors');
-  if (totalEl) totalEl.innerText = snap.val() || 0;
-});
+  db.ref('presence').on('value', (snap) => {
+    const onlineEl = document.getElementById('live-online');
+    if (onlineEl) onlineEl.innerText = snap.numChildren();
+  });
+
+  const visitorRef = db.ref('stats/totalVisitors');
+  visitorRef.transaction((current) => (current || 0) + 1);
+  visitorRef.on('value', (snap) => {
+    const totalEl = document.getElementById('total-visitors');
+    if (totalEl) totalEl.innerText = snap.val() || 0;
+  });
+}
 
 // ২. অটো লগইন ও ইনিশিয়ালাইজেশন
 window.onload = function() {
@@ -48,7 +63,6 @@ window.onload = function() {
   document.getElementById('user-id').value = savedId;
   if(document.getElementById('setting-basic')) document.getElementById('setting-basic').value = savedBasic;
 
-  // তারিখ ও রিপোর্ট মান্থ সেট
   const today = new Date();
   document.getElementById('form-date').valueAsDate = today;
   
@@ -80,7 +94,7 @@ function saveSettings() {
   loadUserOTData();
 }
 
-// ৩. পপ-আপ ফর্ম কন্ট্রোল
+// ৩. পপ-আপ কন্ট্রোল
 function openAddModal() {
   document.getElementById('addModal').style.display = 'flex';
 }
@@ -89,7 +103,7 @@ function closeAddModal() {
   document.getElementById('addModal').style.display = 'none';
 }
 
-// ৪. নতুন দৈনিক হিসাব সেভ করা
+// ৪. দৈনিক হিসাব সংরক্ষণ (অফলাইন সাপোর্টসহ)
 function saveDailyRecord() {
   const date = document.getElementById('form-date').value;
   const duty = parseFloat(document.getElementById('form-duty').value) || 0;
@@ -106,7 +120,7 @@ function saveDailyRecord() {
   const otPay = ot * rate;
   const userId = localStorage.getItem('reliance_user_id') || '12373';
 
-  db.ref('ot_records/' + userId + '/' + date).set({
+  const recordData = {
     date: date,
     duty: duty,
     ot: ot,
@@ -115,20 +129,32 @@ function saveDailyRecord() {
     otherPay: other,
     note: note,
     timestamp: Date.now()
-  }).then(() => {
-    alert('হিসাব সফলভাবে সংরক্ষণ করা হয়েছে!');
-    closeAddModal();
-    loadUserOTData();
-  });
+  };
+
+  // অফলাইন ব্যাকআপ লোকাল মেমরিতে সেভ
+  let localRecords = JSON.parse(localStorage.getItem('local_ot_records_' + userId) || '{}');
+  localRecords[date] = recordData;
+  localStorage.setItem('local_ot_records_' + userId, JSON.stringify(localRecords));
+
+  // অনলাইনে থাকলে Firebase-এ পাঠানো
+  if (navigator.onLine && db) {
+    db.ref('ot_records/' + userId + '/' + date).set(recordData);
+  }
+
+  alert('হিসাব সফলভাবে সংরক্ষণ করা হয়েছে!');
+  closeAddModal();
+  loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও মাসিক রিপোর্ট ফিল্টারিং (স্ক্রিনশটের ফর্ম্যাটে)
+// ৫. ডাটা লোড ও ফিল্টারিং
 function loadUserOTData() {
   const userId = localStorage.getItem('reliance_user_id') || '12373';
-  const selectedMonth = document.getElementById('report-month').value; // YYYY-MM
+  const selectedMonth = document.getElementById('report-month').value;
   const basicSalary = parseFloat(localStorage.getItem('reliance_basic_salary')) || 13000;
 
-  db.ref('ot_records/' + userId).on('value', (snap) => {
+  let localRecords = JSON.parse(localStorage.getItem('local_ot_records_' + userId) || '{}');
+
+  const renderData = (records) => {
     let totalDutyHours = 0;
     let totalOtHours = 0;
     let totalOtPay = 0;
@@ -139,46 +165,39 @@ function loadUserOTData() {
 
     const todayKey = new Date().toISOString().split('T')[0];
 
-    if (snap.exists()) {
-      snap.forEach((child) => {
-        const item = child.val();
+    Object.keys(records).forEach((key) => {
+      const item = records[key];
 
-        // হোম স্ক্রিন আপডেট
-        if (child.key === todayKey) {
-          document.getElementById('today-duty').innerText = item.duty || 0;
-          document.getElementById('today-ot').innerText = item.ot || 0;
-          document.getElementById('today-ot-pay').innerText = item.otPay || 0;
-        }
+      if (item.date === todayKey) {
+        document.getElementById('today-duty').innerText = item.duty || 0;
+        document.getElementById('today-ot').innerText = item.ot || 0;
+        document.getElementById('today-ot-pay').innerText = item.otPay || 0;
+      }
 
-        // নির্বাচন করা মাসের হিসাব ফিল্টার
-        if (item.date && item.date.startsWith(selectedMonth)) {
-          totalDutyHours += (item.duty || 0);
-          totalOtHours += (item.ot || 0);
-          totalOtPay += (item.otPay || 0);
-          totalOtherPay += (item.otherPay || 0);
+      if (item.date && item.date.startsWith(selectedMonth)) {
+        totalDutyHours += (item.duty || 0);
+        totalOtHours += (item.ot || 0);
+        totalOtPay += (item.otPay || 0);
+        totalOtherPay += (item.otherPay || 0);
 
-          historyHTML += `<tr>
-            <td style="padding:6px;">${item.date}</td>
-            <td>${item.duty} ঘণ্টা</td>
-            <td>${item.ot} ঘণ্টা</td>
-            <td>৳${item.rate}</td>
-            <td>৳${item.otPay}</td>
-          </tr>`;
-        }
-      });
-      historyHTML += '</table>';
-    } else {
-      historyHTML = '<p style="text-align:center; color:#777; padding:10px;">কোনো রেকর্ড পাওয়া যায়নি।</p>';
-    }
+        historyHTML += `<tr>
+          <td style="padding:6px;">${item.date}</td>
+          <td>${item.duty} ঘণ্টা</td>
+          <td>${item.ot} ঘণ্টা</td>
+          <td>৳${item.rate}</td>
+          <td>৳${item.otPay}</td>
+        </tr>`;
+      }
+    });
 
-    // হোম স্ক্রিনে এই মাসের মোট
+    historyHTML += '</table>';
+
     document.getElementById('month-total').innerText = totalOtPay;
     document.getElementById('ot-history-list').innerHTML = historyHTML;
     if(document.getElementById('calendar-history-list')) {
       document.getElementById('calendar-history-list').innerHTML = historyHTML;
     }
 
-    // 📊 মাসিক রিপোর্ট স্ক্রিন আপডেট (স্ক্রিনশটের সাথে মিলিয়ে)
     const totalIncome = basicSalary + totalOtPay + totalOtherPay;
 
     document.getElementById('rep-duty-hours').innerText = totalDutyHours;
@@ -187,7 +206,21 @@ function loadUserOTData() {
     document.getElementById('rep-ot-pay').innerText = totalOtPay;
     document.getElementById('rep-other-pay').innerText = totalOtherPay;
     document.getElementById('rep-total-income').innerText = totalIncome;
-  });
+  };
+
+  // প্রথমে লোকাল ডাটা দেখাবে (অফলাইনে)
+  renderData(localRecords);
+
+  // অনলাইন থাকলে Firebase ডাটা সিঙ্ক করবে
+  if (navigator.onLine && db) {
+    db.ref('ot_records/' + userId).on('value', (snap) => {
+      if (snap.exists()) {
+        const firebaseData = snap.val();
+        localStorage.setItem('local_ot_records_' + userId, JSON.stringify(firebaseData));
+        renderData(firebaseData);
+      }
+    });
+  }
 }
 
 // ৬. ট্যাব নেভিগেশন
@@ -199,7 +232,7 @@ function switchTab(tabName, element) {
   element.classList.add('active');
 }
 
-// ৭. কল ও হোয়াটসঅ্যাপ
+// ৭. কন্টাক্ট সাপোর্ট
 function makeCall() {
   window.location.href = "tel:01734883213";
 }
