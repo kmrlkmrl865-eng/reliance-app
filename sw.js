@@ -1,25 +1,20 @@
-const CACHE_NAME = 'reliance-app-v2';
-const urlsToCache = [
+const CACHE_NAME = 'reliance-v4';
+const URLS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './manifest.json',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js'
+  './manifest.json'
 ];
 
-// ফাইল ফোনে ক্যাশ (সেভ) করা
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+      return cache.addAll(URLS_TO_CACHE);
+    }).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// পুরনো ক্যাশ ক্লিয়ার করা
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -30,20 +25,20 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// অফলাইনে ক্যাশ থেকে পেজ দেখানো
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
       }
       return fetch(event.request).catch(() => {
-        return caches.match('./index.html');
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
       });
     })
   );
