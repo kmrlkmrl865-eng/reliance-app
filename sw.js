@@ -1,4 +1,4 @@
-const CACHE_NAME = 'reliance-v4';
+const CACHE_NAME = 'reliance-v5';
 const URLS_TO_CACHE = [
   './',
   './index.html',
