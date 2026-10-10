@@ -26,7 +26,7 @@
     <!-- ১. হোম ট্যাব -->
     <div id="tab-home" class="tab-page">
       <div class="date-card">
-        📅 আজ: <span id="current-date-str">শুক্রবার, ৯ অক্টোবর, ২০২৬</span>
+        📅 আজ: <span id="current-date-str">শনিবার, ১০ অক্টোবর, ২০২৬</span>
       </div>
 
       <!-- পরিচয় ইনপুট কার্ড -->
@@ -54,7 +54,7 @@
           <div class="stat-value">৳<span id="today-ot-pay">0</span></div>
         </div>
         <div class="stat-card green-card">
-          <div class="stat-title">এই মাসের মোট</div>
+          <div class="stat-title">এই মাসের মোট OT</div>
           <div class="stat-value">৳<span id="month-total">0</span></div>
         </div>
       </div>
@@ -90,7 +90,8 @@
         <div class="report-details">
           <p><strong>মোট Duty Hours:</strong> <span id="rep-duty-hours">0</span> ঘণ্টা</p>
           <p><strong>মোট OT Hours:</strong> <span id="rep-ot-hours">0</span> ঘণ্টা</p>
-          <p><strong>Basic Salary:</strong> ৳<span id="rep-basic-salary">13000</span></p>
+          <p><strong>Basic Salary:</strong> ৳<span id="rep-basic-salary">0</span></p>
+          <p><strong>Present Bonus / ভাতা:</strong> ৳<span id="rep-present-bonus">0</span></p>
           <p><strong>মোট OT Pay:</strong> ৳<span id="rep-ot-pay">0</span></p>
           <p><strong>Other Pay:</strong> ৳<span id="rep-other-pay">0</span></p>
           <hr class="report-hr">
@@ -99,12 +100,20 @@
       </div>
     </div>
 
-    <!-- ৪. সেটিংস ট্যাব -->
+    <!-- ৪. সেটিংস ট্যাব (বেতন, ওটি রেট ও প্রেজেন্ট বোনাস সেট করার ঘর) -->
     <div id="tab-settings" class="tab-page" style="display:none;">
       <div class="card">
-        <h3>⚙️ বেতন ও অন্যান্য সেটিংস</h3>
-        <label>Basic Salary (৳):</label>
-        <input type="number" id="setting-basic" value="13000" placeholder="13000">
+        <h3>⚙️ বেতন ও ওটি কাস্টমাইজ সেটিংস</h3>
+        
+        <label>Basic Salary (মূল বেতন ৳):</label>
+        <input type="number" id="setting-basic" placeholder="যেমন: 13000 বা 15000">
+
+        <label>আপনার নির্দিষ্ট OT Rate (৳/ঘণ্টা):</label>
+        <input type="number" id="setting-ot-rate" placeholder="যেমন: 52, 53, 23">
+
+        <label>Present Bonus / সরকারি ভাতা (৳):</label>
+        <input type="number" id="setting-present-bonus" placeholder="যেমন: 500, 1000">
+
         <button class="btn-info" onclick="saveSettings()">সেটিংস সেভ করুন</button>
       </div>
     </div>
@@ -128,7 +137,7 @@
         <input type="number" id="form-ot" value="0">
 
         <label>OT Rate (৳/ঘণ্টা):</label>
-        <input type="number" id="form-rate" value="52">
+        <input type="number" id="form-rate">
 
         <label>Other Pay (৳):</label>
         <input type="number" id="form-other" value="0">
