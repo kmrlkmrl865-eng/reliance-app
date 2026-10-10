@@ -1,4 +1,4 @@
-// ⚡ অফলাইন সার্ভিস ওয়ার্কার রেজিস্টার করুন
+// ⚡ অফলাইন সার্ভিস ওয়ার্কার
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -28,7 +28,7 @@ if (typeof firebase !== 'undefined') {
   db = firebase.database();
 }
 
-// ১. লাইভ ইউজার (অনলাইনে থাকলে)
+// ১. লাইভ ইউজার
 if (db) {
   const onlineRef = db.ref('presence/' + Date.now());
   const connectedRef = db.ref('.info/connected');
@@ -53,15 +53,15 @@ if (db) {
   });
 }
 
-// ২. অটো লগইন ও ইনিশিয়ালাইজেশন
+// ২. অটো লোড
 window.onload = function() {
   const savedName = localStorage.getItem('reliance_user_name') || 'EMON';
   const savedId = localStorage.getItem('reliance_user_id') || '12373';
-  const savedBasic = localStorage.getItem('reliance_basic_salary') || '13000';
-
+  
   document.getElementById('user-name').value = savedName;
   document.getElementById('user-id').value = savedId;
-  if(document.getElementById('setting-basic')) document.getElementById('setting-basic').value = savedBasic;
+
+  loadUserSettings(savedId);
 
   const today = new Date();
   document.getElementById('form-date').valueAsDate = today;
@@ -75,6 +75,17 @@ window.onload = function() {
   loadUserOTData();
 };
 
+// কাস্টম সেটিংস লোড
+function loadUserSettings(userId) {
+  const savedBasic = localStorage.getItem('reliance_basic_' + userId) || '13000';
+  const savedOtRate = localStorage.getItem('reliance_ot_rate_' + userId) || '52';
+  const savedBonus = localStorage.getItem('reliance_bonus_' + userId) || '0';
+
+  if(document.getElementById('setting-basic')) document.getElementById('setting-basic').value = savedBasic;
+  if(document.getElementById('setting-ot-rate')) document.getElementById('setting-ot-rate').value = savedOtRate;
+  if(document.getElementById('setting-present-bonus')) document.getElementById('setting-present-bonus').value = savedBonus;
+}
+
 function saveUserInfo() {
   const name = document.getElementById('user-name').value;
   const id = document.getElementById('user-id').value;
@@ -83,19 +94,32 @@ function saveUserInfo() {
     localStorage.setItem('reliance_user_name', name);
     localStorage.setItem('reliance_user_id', id);
     alert('পরিচয় সংরক্ষিত হয়েছে!');
+    loadUserSettings(id);
     loadUserOTData();
   }
 }
 
+// কাস্টম বেসিক, ওটি রেট ও প্রেজেন্ট বোনাস সেভ করা
 function saveSettings() {
-  const basic = document.getElementById('setting-basic').value || '13000';
-  localStorage.setItem('reliance_basic_salary', basic);
-  alert('সেটিংস সংরক্ষণ করা হয়েছে!');
+  const userId = localStorage.getItem('reliance_user_id') || '12373';
+  const basic = document.getElementById('setting-basic').value || '0';
+  const otRate = document.getElementById('setting-ot-rate').value || '0';
+  const bonus = document.getElementById('setting-present-bonus').value || '0';
+
+  localStorage.setItem('reliance_basic_' + userId, basic);
+  localStorage.setItem('reliance_ot_rate_' + userId, otRate);
+  localStorage.setItem('reliance_bonus_' + userId, bonus);
+
+  alert('আপনার বেসিক বেতন, ওটি রেট ও প্রেজেন্ট বোনাস সফলভাবে সেভ হয়েছে!');
   loadUserOTData();
 }
 
-// ৩. পপ-আপ কন্ট্রোল
+// ৩. পপ-আপ ফর্ম খোলার সময় ইউজারের নিজস্ব সেট করা ওটি রেট আসবে
 function openAddModal() {
+  const userId = localStorage.getItem('reliance_user_id') || '12373';
+  const savedOtRate = localStorage.getItem('reliance_ot_rate_' + userId) || '52';
+  
+  document.getElementById('form-rate').value = savedOtRate;
   document.getElementById('addModal').style.display = 'flex';
 }
 
@@ -103,7 +127,7 @@ function closeAddModal() {
   document.getElementById('addModal').style.display = 'none';
 }
 
-// ৪. দৈনিক হিসাব সংরক্ষণ (অফলাইন সাপোর্টসহ)
+// ৪. দৈনিক হিসাব সেভ
 function saveDailyRecord() {
   const date = document.getElementById('form-date').value;
   const duty = parseFloat(document.getElementById('form-duty').value) || 0;
@@ -117,8 +141,15 @@ function saveDailyRecord() {
     return;
   }
 
-  const otPay = ot * rate;
   const userId = localStorage.getItem('reliance_user_id') || '12373';
+
+  // ফর্ম থেকে রেট বদলালে সেটাও স্থায়ীভাবে সেভ হবে
+  localStorage.setItem('reliance_ot_rate_' + userId, rate);
+  if(document.getElementById('setting-ot-rate')) {
+    document.getElementById('setting-ot-rate').value = rate;
+  }
+
+  const otPay = ot * rate;
 
   const recordData = {
     date: date,
@@ -131,12 +162,10 @@ function saveDailyRecord() {
     timestamp: Date.now()
   };
 
-  // অফলাইন ব্যাকআপ লোকাল মেমরিতে সেভ
   let localRecords = JSON.parse(localStorage.getItem('local_ot_records_' + userId) || '{}');
   localRecords[date] = recordData;
   localStorage.setItem('local_ot_records_' + userId, JSON.stringify(localRecords));
 
-  // অনলাইনে থাকলে Firebase-এ পাঠানো
   if (navigator.onLine && db) {
     db.ref('ot_records/' + userId + '/' + date).set(recordData);
   }
@@ -146,11 +175,13 @@ function saveDailyRecord() {
   loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও ফিল্টারিং
+// ৫. ডাটা লোড ও ফাইনাল হিসাব
 function loadUserOTData() {
   const userId = localStorage.getItem('reliance_user_id') || '12373';
   const selectedMonth = document.getElementById('report-month').value;
-  const basicSalary = parseFloat(localStorage.getItem('reliance_basic_salary')) || 13000;
+  
+  const basicSalary = parseFloat(localStorage.getItem('reliance_basic_' + userId)) || 0;
+  const presentBonus = parseFloat(localStorage.getItem('reliance_bonus_' + userId)) || 0;
 
   let localRecords = JSON.parse(localStorage.getItem('local_ot_records_' + userId) || '{}');
 
@@ -198,20 +229,20 @@ function loadUserOTData() {
       document.getElementById('calendar-history-list').innerHTML = historyHTML;
     }
 
-    const totalIncome = basicSalary + totalOtPay + totalOtherPay;
+    // সর্বমোট আয় = বেসিক বেতন + প্রেজেন্ট বোনাস + মোট ওটি টাকা + অন্যান্য
+    const totalIncome = basicSalary + presentBonus + totalOtPay + totalOtherPay;
 
     document.getElementById('rep-duty-hours').innerText = totalDutyHours;
     document.getElementById('rep-ot-hours').innerText = totalOtHours;
     document.getElementById('rep-basic-salary').innerText = basicSalary;
+    document.getElementById('rep-present-bonus').innerText = presentBonus;
     document.getElementById('rep-ot-pay').innerText = totalOtPay;
     document.getElementById('rep-other-pay').innerText = totalOtherPay;
     document.getElementById('rep-total-income').innerText = totalIncome;
   };
 
-  // প্রথমে লোকাল ডাটা দেখাবে (অফলাইনে)
   renderData(localRecords);
 
-  // অনলাইন থাকলে Firebase ডাটা সিঙ্ক করবে
   if (navigator.onLine && db) {
     db.ref('ot_records/' + userId).on('value', (snap) => {
       if (snap.exists()) {
@@ -223,7 +254,7 @@ function loadUserOTData() {
   }
 }
 
-// ৬. ট্যাব নেভিগেশন
+// ৬. ট্যাব সুইচ
 function switchTab(tabName, element) {
   document.querySelectorAll('.tab-page').forEach(page => page.style.display = 'none');
   document.getElementById('tab-' + tabName).style.display = 'block';
@@ -232,7 +263,7 @@ function switchTab(tabName, element) {
   element.classList.add('active');
 }
 
-// ৭. কন্টাক্ট সাপোর্ট
+// ৭. কল ও হোয়াটসঅ্যাপ
 function makeCall() {
   window.location.href = "tel:01734883213";
 }
