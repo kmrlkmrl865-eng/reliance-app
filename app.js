@@ -1,4 +1,4 @@
-// ⚡ অফলাইন সার্ভিস ওয়ার্কার
+// ⚡ অফলাইন সার্ভিস ওয়ার্কার রেজিস্টার
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -28,7 +28,7 @@ if (typeof firebase !== 'undefined') {
   db = firebase.database();
 }
 
-// ১. লাইভ ইউজার
+// ১. লাইভ অনলাইন ইউজার ও ভিজিটর সংখ্যা
 if (db) {
   const onlineRef = db.ref('presence/' + Date.now());
   const connectedRef = db.ref('.info/connected');
@@ -53,15 +53,18 @@ if (db) {
   });
 }
 
-// ২. অটো লোড
+// ২. অটো লোড (ডিফল্ট আইডি ফাঁকা রাখা হয়েছে যেন অন্যের সাথে প্রাইভেসি অক্ষুণ্ন থাকে)
 window.onload = function() {
-  const savedName = localStorage.getItem('reliance_user_name') || 'EMON';
-  const savedId = localStorage.getItem('reliance_user_id') || '12373';
+  const savedName = localStorage.getItem('reliance_user_name') || '';
+  const savedId = localStorage.getItem('reliance_user_id') || '';
   
   document.getElementById('user-name').value = savedName;
   document.getElementById('user-id').value = savedId;
 
-  loadUserSettings(savedId);
+  if (savedId) {
+    loadUserSettings(savedId);
+    loadUserOTData();
+  }
 
   const today = new Date();
   document.getElementById('form-date').valueAsDate = today;
@@ -71,11 +74,9 @@ window.onload = function() {
 
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   document.getElementById('current-date-str').innerText = today.toLocaleDateString('bn-BD', options);
-
-  loadUserOTData();
 };
 
-// কাস্টম সেটিংস লোড
+// কাস্টম সেটিংস লোড (আইডি ভিত্তিক)
 function loadUserSettings(userId) {
   const savedBasic = localStorage.getItem('reliance_basic_' + userId) || '13000';
   const savedOtRate = localStorage.getItem('reliance_ot_rate_' + userId) || '52';
@@ -86,22 +87,30 @@ function loadUserSettings(userId) {
   if(document.getElementById('setting-present-bonus')) document.getElementById('setting-present-bonus').value = savedBonus;
 }
 
+// পরিচয় সংরক্ষণ করা
 function saveUserInfo() {
-  const name = document.getElementById('user-name').value;
-  const id = document.getElementById('user-id').value;
+  const name = document.getElementById('user-name').value.trim();
+  const id = document.getElementById('user-id').value.trim();
 
   if (name && id) {
     localStorage.setItem('reliance_user_name', name);
     localStorage.setItem('reliance_user_id', id);
-    alert('পরিচয় সংরক্ষিত হয়েছে!');
+    alert('আপনার পরিচয় সফলভাবে সংরক্ষিত হয়েছে!');
     loadUserSettings(id);
     loadUserOTData();
+  } else {
+    alert('দয়া করে আপনার নাম ও আলাদা একটি আইডি নম্বর দিন।');
   }
 }
 
 // কাস্টম বেসিক, ওটি রেট ও প্রেজেন্ট বোনাস সেভ করা
 function saveSettings() {
-  const userId = localStorage.getItem('reliance_user_id') || '12373';
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) {
+    alert('প্রথমে হোম পেজে আপনার নাম ও আইডি সেভ করুন!');
+    return;
+  }
+
   const basic = document.getElementById('setting-basic').value || '0';
   const otRate = document.getElementById('setting-ot-rate').value || '0';
   const bonus = document.getElementById('setting-present-bonus').value || '0';
@@ -110,15 +119,19 @@ function saveSettings() {
   localStorage.setItem('reliance_ot_rate_' + userId, otRate);
   localStorage.setItem('reliance_bonus_' + userId, bonus);
 
-  alert('আপনার বেসিক বেতন, ওটি রেট ও প্রেজেন্ট বোনাস সফলভাবে সেভ হয়েছে!');
+  alert('আপনার বেসিক বেতন, ওটি রেট ও প্রেজেন্ট বোনাস সেভ হয়েছে!');
   loadUserOTData();
 }
 
-// ৩. পপ-আপ ফর্ম খোলার সময় ইউজারের নিজস্ব সেট করা ওটি রেট আসবে
+// ৩. পপ-আপ ফর্ম খোলার সময় ইউজারের নিজস্ব সেট করা রেট লোড হওয়া
 function openAddModal() {
-  const userId = localStorage.getItem('reliance_user_id') || '12373';
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) {
+    alert('হিসাব যোগ করার আগে উপরে নাম ও আইডি দিয়ে সংরক্ষণ করুন!');
+    return;
+  }
+
   const savedOtRate = localStorage.getItem('reliance_ot_rate_' + userId) || '52';
-  
   document.getElementById('form-rate').value = savedOtRate;
   document.getElementById('addModal').style.display = 'flex';
 }
@@ -127,8 +140,14 @@ function closeAddModal() {
   document.getElementById('addModal').style.display = 'none';
 }
 
-// ৪. দৈনিক হিসাব সেভ
+// ৪. দৈনিক হিসাব সংরক্ষণ (অফলাইন ও অনলাইন ব্যাকআপসহ)
 function saveDailyRecord() {
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) {
+    alert('প্রথমে আপনার পরিচয় সংরক্ষণ করুন।');
+    return;
+  }
+
   const date = document.getElementById('form-date').value;
   const duty = parseFloat(document.getElementById('form-duty').value) || 0;
   const ot = parseFloat(document.getElementById('form-ot').value) || 0;
@@ -141,9 +160,7 @@ function saveDailyRecord() {
     return;
   }
 
-  const userId = localStorage.getItem('reliance_user_id') || '12373';
-
-  // ফর্ম থেকে রেট বদলালে সেটাও স্থায়ীভাবে সেভ হবে
+  // ফর্মে নতুন রেট ইনপুট দিলে তা স্থায়ীভাবে সেভ থাকা
   localStorage.setItem('reliance_ot_rate_' + userId, rate);
   if(document.getElementById('setting-ot-rate')) {
     document.getElementById('setting-ot-rate').value = rate;
@@ -175,11 +192,12 @@ function saveDailyRecord() {
   loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও ফাইনাল হিসাব
+// ৫. ডাটা লোড ও সঠিক হিসাব রেন্ডার
 function loadUserOTData() {
-  const userId = localStorage.getItem('reliance_user_id') || '12373';
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) return;
+
   const selectedMonth = document.getElementById('report-month').value;
-  
   const basicSalary = parseFloat(localStorage.getItem('reliance_basic_' + userId)) || 0;
   const presentBonus = parseFloat(localStorage.getItem('reliance_bonus_' + userId)) || 0;
 
@@ -229,7 +247,6 @@ function loadUserOTData() {
       document.getElementById('calendar-history-list').innerHTML = historyHTML;
     }
 
-    // সর্বমোট আয় = বেসিক বেতন + প্রেজেন্ট বোনাস + মোট ওটি টাকা + অন্যান্য
     const totalIncome = basicSalary + presentBonus + totalOtPay + totalOtherPay;
 
     document.getElementById('rep-duty-hours').innerText = totalDutyHours;
@@ -254,7 +271,7 @@ function loadUserOTData() {
   }
 }
 
-// ৬. ট্যাব সুইচ
+// ৬. ট্যাব নেভিগেশন
 function switchTab(tabName, element) {
   document.querySelectorAll('.tab-page').forEach(page => page.style.display = 'none');
   document.getElementById('tab-' + tabName).style.display = 'block';
@@ -263,7 +280,7 @@ function switchTab(tabName, element) {
   element.classList.add('active');
 }
 
-// ৭. কল ও হোয়াটসঅ্যাপ
+// ৭. হেল্পলাইন কন্টাক্ট
 function makeCall() {
   window.location.href = "tel:01734883213";
 }
