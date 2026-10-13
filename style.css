@@ -1,279 +1,209 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-}
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reliance Job & OT</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#16a34a">
+</head>
+<body>
 
-body {
-  background-color: #f4f6f9;
-  color: #333;
-  padding-bottom: 120px;
-}
+  <!-- হেডার সেকশন -->
+  <header>
+    <div class="header-content">
+      <h2>Reliance Job & OT</h2>
+      <p>RELIANCE DRESSES LIMITED</p>
+      <div class="stats-bar">
+        <span>🟢 অনলাইন ইউজার: <strong id="live-online">1</strong></span>
+        <span>👁️ মোট ভিজিটর: <strong id="total-visitors">0</strong></span>
+      </div>
+    </div>
+  </header>
 
-.stats-bar {
-  display: flex;
-  justify-content: space-between;
-  background: #15803d;
-  color: #fff;
-  padding: 6px 15px;
-  font-size: 12px;
-}
+  <!-- প্রধান কনটেন্ট কন্টেইনার -->
+  <main class="container">
 
-.app-header {
-  background: #15803d;
-  color: white;
-  text-align: center;
-  padding: 15px;
-}
+    <!-- ১. হোম ট্যাব -->
+    <div id="tab-home" class="tab-page">
+      <!-- পরিচয় কার্ড -->
+      <div class="card">
+        <h3>👤 আপনার পরিচয় ইনপুট দিন</h3>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+          (আপনার হিসাব আলাদা ও প্রাইভেট রাখতে নিজের নাম ও আলাদা একটি আইডি দিন)
+        </p>
+        <div class="input-group">
+          <input type="text" id="user-name" placeholder="আপনার নাম লিখুন">
+          <input type="text" id="user-id" placeholder="আপনার আইডি নম্বর">
+          <button class="btn-primary" onclick="saveUserInfo()">সংরক্ষণ করুন</button>
+        </div>
+      </div>
 
-.app-header h2 {
-  font-size: 20px;
-}
+      <!-- আজকের ড্যাশবোর্ড কার্ড -->
+      <div class="card summary-card">
+        <h3>📅 আজকের ডিউটি ও ওটি হিসাব</h3>
+        <p id="current-date-str" class="date-subtitle"></p>
+        <div class="grid-3">
+          <div class="stat-box">
+            <span>ডিউটি</span>
+            <h4 id="today-duty">0</h4>
+            <small>ঘণ্টা</small>
+          </div>
+          <div class="stat-box">
+            <span>আজকের OT</span>
+            <h4 id="today-ot">0</h4>
+            <small>ঘণ্টা</small>
+          </div>
+          <div class="stat-box highlight">
+            <span>OT আয়</span>
+            <h4>৳<span id="today-ot-pay">0</span></h4>
+            <small>টাকা</small>
+          </div>
+        </div>
+      </div>
 
-.app-header .sub-title {
-  font-size: 11px;
-  letter-spacing: 1px;
-  opacity: 0.9;
-}
+      <!-- মাসের ওভারভিউ কার্ড -->
+      <div class="card">
+        <h3>📊 চলিত মাসের ওটি মোট আয়</h3>
+        <div class="month-total-box">
+          <h2>৳<span id="month-total">0</span></h2>
+        </div>
+        <button class="btn-add-ot" onclick="openAddModal()">➕ দৈনিক হিসাব যোগ করুন</button>
+      </div>
 
-.container {
-  padding: 15px;
-}
+      <!-- সাম্প্রতিক হিস্ট্রি -->
+      <div class="card">
+        <h3>📜 সাম্প্রতিক ওটি তালিকা</h3>
+        <div id="ot-history-list">
+          <p style="text-align:center; color:#94a3b8;">কোনো হিসাব পাওয়া যায়নি</p>
+        </div>
+      </div>
+    </div>
 
-.date-card {
-  background: #e0f2fe;
-  color: #0369a1;
-  text-align: center;
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
+    <!-- ২. ক্যালেন্ডার/হিস্ট্রি ট্যাব -->
+    <div id="tab-calendar" class="tab-page" style="display:none;">
+      <div class="card">
+        <h3>📅 মাসিক বিস্তারিত হিস্ট্রি</h3>
+        <div id="calendar-history-list"></div>
+      </div>
+    </div>
 
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  margin-bottom: 15px;
-}
+    <!-- ৩. রিপোর্ট ট্যাব -->
+    <div id="tab-report" class="tab-page" style="display:none;">
+      <div class="card">
+        <h3>📈 মাস ভিত্তিক চূড়ান্ত রিপোর্ট</h3>
+        <label>মাস নির্বাচন করুন:</label>
+        <input type="month" id="report-month" onchange="loadUserOTData()">
 
-.card h3 {
-  font-size: 16px;
-  margin-bottom: 12px;
-  color: #1e293b;
-}
+        <div class="report-details" style="margin-top: 15px;">
+          <p><strong>মোট ডিউটি (Absent মাইনাস সহ):</strong> <span id="rep-duty-hours">0</span> ঘণ্টা</p>
+          <p><strong>মোট OT ঘণ্টা:</strong> <span id="rep-ot-hours">0</span> ঘণ্টা</p>
+          <hr>
+          <p><strong>মূল বেতন (Basic Salary):</strong> ৳<span id="rep-basic-salary">0</span></p>
+          <p><strong>প্রেজেন্ট বোনাস / ভাতা:</strong> ৳<span id="rep-present-bonus">0</span></p>
+          <p><strong>মোট OT বিল:</strong> ৳<span id="rep-ot-pay">0</span></p>
+          <p><strong>অন্যান্য আয়:</strong> ৳<span id="rep-other-pay">0</span></p>
+          <hr style="border: 1px dashed #cbd5e1;">
+          <h3 style="color: #16a34a; margin-top: 10px;">সর্বমোট আয়: ৳<span id="rep-total-income">0</span></h3>
+        </div>
+      </div>
+    </div>
 
-input, label {
-  display: block;
-  width: 100%;
-}
+    <!-- ৪. কাস্টমাইজ সেটিংস ট্যাব -->
+    <div id="tab-settings" class="tab-page" style="display:none;">
+      <div class="card">
+        <h3>⚙️ বেতন ও ওটি কাস্টমাইজ সেটিংস</h3>
+        
+        <label>Basic Salary (মূল বেতন ৳):</label>
+        <input type="number" id="setting-basic" placeholder="যেমন: 13000">
 
-label {
-  font-size: 13px;
-  margin-top: 8px;
-  color: #475569;
-  font-weight: bold;
-}
+        <label>আপনার নির্দিষ্ট OT Rate (৳/ঘণ্টা):</label>
+        <input type="number" id="setting-ot-rate" placeholder="যেমন: 53">
 
-input {
-  padding: 10px;
-  margin-top: 4px;
-  margin-bottom: 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 14px;
-}
+        <label>Present Bonus / সরকারি ভাতা (৳):</label>
+        <input type="number" id="setting-present-bonus" placeholder="যেমন: 300">
 
-/* ৪টি মূল হিসাব গ্রিড */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 15px;
-}
+        <!-- 🔴 কাস্টম Absent Days -->
+        <label>Absent Days (অনুপস্থিত দিন):</label>
+        <input type="number" id="setting-absent-days" placeholder="যেমন: 2 (অনুপস্থিত থাকলে দিন সংখ্যা লিখুন)">
+        <small style="color: #64748b; display: block; margin-bottom: 12px;">
+          *প্রতি ১ দিন Absent-এর জন্য মোট ডিউটি থেকে ৮ ঘণ্টা এবং Basic Salary থেকে ১ দিনের বেতন মাইনাস হবে।
+        </small>
 
-.stat-card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  border-left: 4px solid #0284c7;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  text-align: center;
-}
+        <button class="btn-info" onclick="saveSettings()">সেটিংস সেভ করুন</button>
+      </div>
+    </div>
 
-.stat-card.green-card {
-  border-left-color: #16a34a;
-  background: #f0fdf4;
-}
+  </main>
 
-.stat-title {
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 5px;
-}
+  <!-- দৈনিক হিসাব ইনপুট করার পপ-আপ মডাল -->
+  <div id="addModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeAddModal()">&times;</span>
+      <h3>📝 দৈনিক হিসাব লিখুন</h3>
+      
+      <label>তারিখ:</label>
+      <input type="date" id="form-date">
 
-.stat-value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #0f172a;
-}
+      <label>ডিউটি (ঘণ্টা):</label>
+      <input type="number" id="form-duty" value="8" placeholder="8">
 
-/* বাটনসমূহ */
-.btn-primary {
-  width: 100%;
-  background: #1d68a7;
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-bottom: 15px;
-}
+      <label>OT (ঘণ্টা):</label>
+      <input type="number" id="form-ot" placeholder="যেমন: 2 বা 3">
 
-.btn-info {
-  width: 100%;
-  background: #0284c7;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-}
+      <label>OT রেট (৳/ঘণ্টা):</label>
+      <input type="number" id="form-rate" placeholder="আপনার রেট">
 
-/* 📊 রিপোর্ট কার্ড স্টাইল (আপনার ২য় স্ক্রিনশট থেকে) */
-.report-card {
-  padding: 20px;
-}
+      <label>অন্যান্য টাকা (যদি থাকে):</label>
+      <input type="number" id="form-other" placeholder="0">
 
-.month-picker-wrap {
-  margin-bottom: 15px;
-}
+      <label>নোট/মন্তব্য:</label>
+      <input type="text" id="form-note" placeholder="যেমন: নাইট ডিউটি / ছুটির দিন">
 
-.report-details p {
-  font-size: 15px;
-  margin-bottom: 10px;
-  color: #334155;
-}
+      <button class="btn-primary" style="width:100%; margin-top:12px;" onclick="saveDailyRecord()">হিসাব সংরক্ষণ করুন</button>
+    </div>
+  </div>
 
-.report-hr {
-  margin: 15px 0;
-  border: 0;
-  border-top: 1px solid #cbd5e1;
-}
+  <!-- সোশ্যাল বার (Facebook ও TikTok প্রোফাইল লিংক) -->
+  <div class="social-bar">
+    <a href="https://www.facebook.com/share/19QErXkm4Q/" target="_blank" class="btn-facebook">
+      📘 Facebook Profile
+    </a>
+    <a href="https://www.tiktok.com/@kamrulhosen16?_r=1&_t=ZS-9AWbi35RrVd" target="_blank" class="btn-tiktok">
+      🎵 TikTok Profile
+    </a>
+  </div>
 
-.total-income-txt {
-  color: #15803d;
-  font-size: 18px;
-}
+  <!-- হেল্পলাইন ও সাপোর্ট বার -->
+  <div class="contact-bar">
+    <button class="btn-whatsapp" onclick="openWhatsApp()">💬 হোয়াটসঅ্যাপ সাপোর্ট</button>
+    <button class="btn-call" onclick="makeCall()">📞 কল হেল্পলাইন</button>
+  </div>
 
-/* 🔲 পপ-আপ ফর্ম (১ম স্ক্রিনশট থেকে) */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99;
-}
+  <!-- বটম নেভিগেশন বার -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home', this)">
+      <span>🏠</span>
+      <small>Home</small>
+    </button>
+    <button class="nav-item" onclick="switchTab('calendar', this)">
+      <span>📅</span>
+      <small>Calendar</small>
+    </button>
+    <button class="nav-item" onclick="switchTab('report', this)">
+      <span>📊</span>
+      <small>Report</small>
+    </button>
+    <button class="nav-item" onclick="switchTab('settings', this)">
+      <span>⚙️</span>
+      <small>Settings</small>
+    </button>
+  </nav>
 
-.modal-content {
-  background: white;
-  width: 90%;
-  max-width: 400px;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.modal-header h4 {
-  font-size: 18px;
-}
-
-.close-btn {
-  font-size: 22px;
-  cursor: pointer;
-  color: #666;
-}
-
-.btn-save-modal {
-  width: 100%;
-  background: #15803d;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 10px;
-  cursor: pointer;
-}
-
-/* বটম নেভিগেশন ও হেল্পলাইন */
-.bottom-nav {
-  position: fixed;
-  bottom: 50px;
-  left: 0;
-  right: 0;
-  background: white;
-  display: flex;
-  justify-content: space-around;
-  padding: 8px 0;
-  border-top: 1px solid #e2e8f0;
-  font-size: 12px;
-  text-align: center;
-}
-
-.nav-item {
-  color: #64748b;
-  cursor: pointer;
-}
-
-.nav-item.active {
-  color: #15803d;
-  font-weight: bold;
-}
-
-.contact-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  height: 50px;
-}
-
-.btn-whatsapp {
-  width: 50%;
-  background: #25d366;
-  color: white;
-  border: none;
-  font-weight: bold;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-call {
-  width: 50%;
-  background: #1e3a8a;
-  color: white;
-  border: none;
-  font-weight: bold;
-  font-size: 13px;
-  cursor: pointer;
-}
+  <!-- Firebase & App Script -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
