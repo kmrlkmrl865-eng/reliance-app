@@ -1,4 +1,4 @@
-// ⚡ অফলাইন সার্ভিস ওয়ার্কার
+// ⚡ সার্ভিস ওয়ার্কার
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -89,7 +89,7 @@ function loadUserSettings(userId) {
   if(document.getElementById('setting-absent-days')) document.getElementById('setting-absent-days').value = savedAbsent;
 }
 
-// পরিচয় সেভ
+// পরিচয় সংরক্ষণ
 function saveUserInfo() {
   const name = document.getElementById('user-name').value.trim();
   const id = document.getElementById('user-id').value.trim();
@@ -105,7 +105,7 @@ function saveUserInfo() {
   }
 }
 
-// সেটিংস সেভ
+// কাস্টম সেটিংস সেভ
 function saveSettings() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) {
@@ -127,7 +127,7 @@ function saveSettings() {
   loadUserOTData();
 }
 
-// ৩. পপ-আপ ফর্ম খোলার সময়
+// ৩. পপ-আপ ফর্ম খোলার সময় রেট
 function openAddModal() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) {
@@ -195,7 +195,7 @@ function saveDailyRecord() {
   loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও মাইনাসসহ ফাইনাল হিসাব
+// ৫. ডাটা লোড ও Absent হিসাব
 function loadUserOTData() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) return;
@@ -251,7 +251,7 @@ function loadUserOTData() {
       document.getElementById('calendar-history-list').innerHTML = historyHTML;
     }
 
-    // Absent এর কারণে ডিউটি ঘণ্টা ও বেতন কাটা
+    // 🔴 Absent মাইনাস হিসাব (৮ ঘণ্টা ডিউটি ও ১ দিনের বেতন কর্তন)
     const absentHours = absentDays * 8;
     const finalDutyHours = Math.max(0, totalDutyHours - absentHours);
 
@@ -283,7 +283,7 @@ function loadUserOTData() {
   }
 }
 
-// ৬. ট্যাব সুইচ
+// ৬. ট্যাব নেভিগেশন
 function switchTab(tabName, element) {
   document.querySelectorAll('.tab-page').forEach(page => page.style.display = 'none');
   document.getElementById('tab-' + tabName).style.display = 'block';
@@ -292,7 +292,7 @@ function switchTab(tabName, element) {
   element.classList.add('active');
 }
 
-// ৭. যোগাযোগের বাটনসমূহ
+// ৭. কল ও হোয়াটসঅ্যাপ
 function makeCall() {
   window.location.href = "tel:01734883213";
 }
