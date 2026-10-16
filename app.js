@@ -203,7 +203,7 @@ function saveDailyRecord() {
   loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও বারসহ টেবিল প্রদর্শন
+// ৫. ডাটা লোড ও আগের টেবিল মডেলে বারসহ প্রদর্শন
 function loadUserOTData() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) return;
@@ -221,8 +221,8 @@ function loadUserOTData() {
     let totalOtPay = 0;
     let totalOtherPay = 0;
 
-    let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:12px; margin-top:8px;">';
-    historyHTML += '<tr style="background:#16a34a; color:white; font-size:13px;"><th>তারিখ ও বার</th><th>Duty</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
+    let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:13px; margin-top:8px;">';
+    historyHTML += '<tr style="background:#16a34a; color:white;"><th>তারিখ</th><th>Duty</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
 
     const todayKey = new Date().toISOString().split('T')[0];
 
