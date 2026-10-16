@@ -1,210 +1,323 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reliance Job & OT</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#16a34a">
-</head>
-<body>
+// ⚡ সার্ভিস ওয়ার্কার
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker Registered!', reg))
+      .catch(err => console.log('Service Worker Failed!', err));
+  });
+}
 
-  <!-- হেডার সেকশন -->
-  <header>
-    <div class="header-content">
-      <h2>Reliance Job & OT</h2>
-      <p>RELIANCE DRESSES LIMITED</p>
-      <div class="stats-bar">
-        <span>🟢 অনলাইন ইউজার: <strong id="live-online">1</strong></span>
-        <span>👁️ মোট ভিজিটর: <strong id="total-visitors">0</strong></span>
-      </div>
-    </div>
-  </header>
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyCzMYQQ5GldS8CBCz...",
+  authDomain: "reliance-app-1d8f6.firebaseapp.com",
+  databaseURL: "https://reliance-app-1d8f6-default-rtdb.firebaseio.com",
+  projectId: "reliance-app-1d8f6",
+  storageBucket: "reliance-app-1d8f6.appspot.com",
+  messagingSenderId: "800312325129",
+  appId: "1:800312325129:web:ec01...",
+  measurementId: "G-VCMJ9L50M1"
+};
 
-  <!-- প্রধান কনটেন্ট কন্টেইনার -->
-  <main class="container">
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-    <!-- ১. হোম ট্যাব -->
-    <div id="tab-home" class="tab-page">
-      <!-- পরিচয় কার্ড -->
-      <div class="card">
-        <h3>👤 আপনার পরিচয় ইনপুট দিন</h3>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-          (আপনার হিসাব আলাদা রাখতে নাম ও আলাদা একটি আইডি দিন)
-        </p>
-        <div class="input-group">
-          <input type="text" id="user-name" placeholder="আপনার নাম লিখুন">
-          <input type="text" id="user-id" placeholder="আপনার আইডি নম্বর">
-          <button class="btn-primary" onclick="saveUserInfo()">সংরক্ষণ করুন</button>
-        </div>
-      </div>
+let db = null;
+if (typeof firebase !== 'undefined') {
+  db = firebase.database();
+}
 
-      <!-- আজকের ড্যাশবোর্ড কার্ড -->
-      <div class="card summary-card">
-        <h3>📅 আজকের ডিউটি ও ওটি হিসাব</h3>
-        <p id="current-date-str" class="date-subtitle"></p>
-        <div class="grid-3">
-          <div class="stat-box">
-            <span>ডিউটি</span>
-            <h4 id="today-duty">0</h4>
-            <small>ঘণ্টা</small>
-          </div>
-          <div class="stat-box">
-            <span>আজকের OT</span>
-            <h4 id="today-ot">0</h4>
-            <small>ঘণ্টা</small>
-          </div>
-          <div class="stat-box highlight">
-            <span>OT আয়</span>
-            <h4>৳<span id="today-ot-pay">0</span></h4>
-            <small>টাকা</small>
-          </div>
-        </div>
-      </div>
+// ১. অনলাইন ইউজার ও ভিজিটর
+if (db) {
+  const onlineRef = db.ref('presence/' + Date.now());
+  const connectedRef = db.ref('.info/connected');
 
-      <!-- মাসের ওভারভিউ কার্ড -->
-      <div class="card">
-        <h3>📊 চলিত মাসের ওটি মোট আয়</h3>
-        <div class="month-total-box">
-          <h2>৳<span id="month-total">0</span></h2>
-        </div>
-        <button class="btn-add-ot" onclick="openAddModal()">➕ দৈনিক হিসাব যোগ করুন</button>
-      </div>
+  connectedRef.on('value', (snap) => {
+    if (snap.val() === true) {
+      onlineRef.onDisconnect().remove();
+      onlineRef.set(true);
+    }
+  });
 
-      <!-- সাম্প্রতিক হিস্ট্রি (বারসহ) -->
-      <div class="card">
-        <h3>📜 আপনার সংরক্ষিত হিসাব তালিকা</h3>
-        <div id="ot-history-list">
-          <p style="text-align:center; color:#94a3b8;">কোনো হিসাব পাওয়া যায়নি</p>
-        </div>
-      </div>
-    </div>
+  db.ref('presence').on('value', (snap) => {
+    const onlineEl = document.getElementById('live-online');
+    if (onlineEl) onlineEl.innerText = snap.numChildren();
+  });
 
-    <!-- ২. ক্যালেন্ডার/হিস্ট্রি ট্যাব -->
-    <div id="tab-calendar" class="tab-page" style="display:none;">
-      <div class="card">
-        <h3>📅 মাসিক বিস্তারিত হিস্ট্রি</h3>
-        <div id="calendar-history-list"></div>
-      </div>
-    </div>
+  const visitorRef = db.ref('stats/totalVisitors');
+  visitorRef.transaction((current) => (current || 0) + 1);
+  visitorRef.on('value', (snap) => {
+    const totalEl = document.getElementById('total-visitors');
+    if (totalEl) totalEl.innerText = snap.val() || 0;
+  });
+}
 
-    <!-- ৩. রিপোর্ট ট্যাব -->
-    <div id="tab-report" class="tab-page" style="display:none;">
-      <div class="card">
-        <h3>📈 মাস ভিত্তিক চূড়ান্ত রিপোর্ট</h3>
-        <label>মাস নির্বাচন করুন:</label>
-        <input type="month" id="report-month" onchange="loadUserOTData()">
+// 🟢 তারিখ থেকে বাংলায় বারের নাম বের করার ফাংশন
+function getBengaliDayName(dateString) {
+  if (!dateString) return '';
+  const dateObj = new Date(dateString);
+  const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+  return days[dateObj.getDay()] || '';
+}
 
-        <div class="report-details" style="margin-top: 15px;">
-          <p><strong>মোট ডিউটি (Absent মাইনাস সহ):</strong> <span id="rep-duty-hours">0</span> ঘণ্টা</p>
-          <p><strong>মোট OT ঘণ্টা:</strong> <span id="rep-ot-hours">0</span> ঘণ্টা</p>
-          <hr>
-          <p><strong>মূল বেতন (Basic Salary):</strong> ৳<span id="rep-basic-salary">0</span></p>
-          <p id="absent-deduct-info" style="color: #dc2626; font-size: 13px; font-weight: 600; display: none;"></p>
-          <p><strong>প্রেজেন্ট বোনাস / ভাতা:</strong> ৳<span id="rep-present-bonus">0</span></p>
-          <p><strong>মোট OT বিল:</strong> ৳<span id="rep-ot-pay">0</span></p>
-          <p><strong>অন্যান্য আয়:</strong> ৳<span id="rep-other-pay">0</span></p>
-          <hr style="border: 1px dashed #cbd5e1;">
-          <h3 style="color: #16a34a; margin-top: 10px;">সর্বমোট আয়: ৳<span id="rep-total-income">0</span></h3>
-        </div>
-      </div>
-    </div>
+// ২. অটো লোড
+window.onload = function() {
+  const savedName = localStorage.getItem('reliance_user_name') || '';
+  const savedId = localStorage.getItem('reliance_user_id') || '';
+  
+  document.getElementById('user-name').value = savedName;
+  document.getElementById('user-id').value = savedId;
 
-    <!-- ৪. কাস্টমাইজ সেটিংস ট্যাব -->
-    <div id="tab-settings" class="tab-page" style="display:none;">
-      <div class="card">
-        <h3>⚙️ বেতন ও ওটি কাস্টমাইজ সেটিংস</h3>
-        
-        <label>Basic Salary (মূল বেতন ৳):</label>
-        <input type="number" id="setting-basic" placeholder="যেমন: 13000">
+  if (savedId) {
+    loadUserSettings(savedId);
+    loadUserOTData();
+  }
 
-        <label>আপনার নির্দিষ্ট OT Rate (৳/ঘণ্টা):</label>
-        <input type="number" id="setting-ot-rate" placeholder="যেমন: 53">
+  const today = new Date();
+  document.getElementById('form-date').valueAsDate = today;
+  
+  const monthStr = today.toISOString().slice(0, 7);
+  document.getElementById('report-month').value = monthStr;
 
-        <label>Present Bonus / সরকারি ভাতা (৳):</label>
-        <input type="number" id="setting-present-bonus" placeholder="যেমন: 300">
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('current-date-str').innerText = today.toLocaleDateString('bn-BD', options);
+};
 
-        <!-- Absent Days সেটিং -->
-        <label>Absent Days (অনুপস্থিত দিন):</label>
-        <input type="number" id="setting-absent-days" placeholder="যেমন: 2 (অনুপস্থিত দিন সংখ্যা)">
-        <small style="color: #64748b; display: block; margin-bottom: 12px;">
-          *প্রতি ১ দিন Absent-এর জন্য মোট ডিউটি থেকে ৮ ঘণ্টা এবং Basic Salary থেকে ১ দিনের সমপরিমাণ বেতন মাইনাস হবে।
-        </small>
+// কাস্টম সেটিংস লোড
+function loadUserSettings(userId) {
+  const savedBasic = localStorage.getItem('reliance_basic_' + userId) || '13000';
+  const savedOtRate = localStorage.getItem('reliance_ot_rate_' + userId) || '53';
+  const savedBonus = localStorage.getItem('reliance_bonus_' + userId) || '300';
+  const savedAbsent = localStorage.getItem('reliance_absent_' + userId) || '0';
 
-        <button class="btn-info" onclick="saveSettings()">সেটিংস সেভ করুন</button>
-      </div>
-    </div>
+  if(document.getElementById('setting-basic')) document.getElementById('setting-basic').value = savedBasic;
+  if(document.getElementById('setting-ot-rate')) document.getElementById('setting-ot-rate').value = savedOtRate;
+  if(document.getElementById('setting-present-bonus')) document.getElementById('setting-present-bonus').value = savedBonus;
+  if(document.getElementById('setting-absent-days')) document.getElementById('setting-absent-days').value = savedAbsent;
+}
 
-  </main>
+// পরিচয় সেভ
+function saveUserInfo() {
+  const name = document.getElementById('user-name').value.trim();
+  const id = document.getElementById('user-id').value.trim();
 
-  <!-- দৈনিক হিসাব ইনপুট করার পপ-আপ মডাল -->
-  <div id="addModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <span class="close-btn" onclick="closeAddModal()">&times;</span>
-      <h3>📝 দৈনিক হিসাব লিখুন</h3>
-      
-      <label>তারিখ:</label>
-      <input type="date" id="form-date">
+  if (name && id) {
+    localStorage.setItem('reliance_user_name', name);
+    localStorage.setItem('reliance_user_id', id);
+    alert('আপনার পরিচয় সফলভাবে সংরক্ষিত হয়েছে!');
+    loadUserSettings(id);
+    loadUserOTData();
+  } else {
+    alert('দয়া করে আপনার নাম ও আলাদা একটি আইডি নম্বর দিন।');
+  }
+}
 
-      <label>ডিউটি (ঘণ্টা):</label>
-      <input type="number" id="form-duty" value="8" placeholder="8">
+// সেটিংস সেভ
+function saveSettings() {
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) {
+    alert('প্রথমে হোম পেজে নাম ও আইডি সেভ করুন!');
+    return;
+  }
 
-      <label>OT (ঘণ্টা):</label>
-      <input type="number" id="form-ot" placeholder="যেমন: 2 বা 3">
+  const basic = document.getElementById('setting-basic').value || '0';
+  const otRate = document.getElementById('setting-ot-rate').value || '0';
+  const bonus = document.getElementById('setting-present-bonus').value || '0';
+  const absent = document.getElementById('setting-absent-days').value || '0';
 
-      <label>OT রেট (৳/ঘণ্টা):</label>
-      <input type="number" id="form-rate" placeholder="আপনার রেট">
+  localStorage.setItem('reliance_basic_' + userId, basic);
+  localStorage.setItem('reliance_ot_rate_' + userId, otRate);
+  localStorage.setItem('reliance_bonus_' + userId, bonus);
+  localStorage.setItem('reliance_absent_' + userId, absent);
 
-      <label>অন্যান্য টাকা (যদি থাকে):</label>
-      <input type="number" id="form-other" placeholder="0">
+  alert('আপনার সমস্ত কাস্টম সেটিংস সেভ হয়েছে!');
+  loadUserOTData();
+}
 
-      <label>নোট/মন্তব্য:</label>
-      <input type="text" id="form-note" placeholder="যেমন: নাইট ডিউটি / ছুটির দিন">
+// ৩. পপ-আপ মডাল
+function openAddModal() {
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) {
+    alert('হিসাব যোগ করার আগে উপরে নাম ও আইডি দিয়ে সংরক্ষণ করুন!');
+    return;
+  }
 
-      <button class="btn-primary" style="width:100%; margin-top:12px;" onclick="saveDailyRecord()">হিসাব সংরক্ষণ করুন</button>
-    </div>
-  </div>
+  const savedOtRate = localStorage.getItem('reliance_ot_rate_' + userId) || '53';
+  document.getElementById('form-rate').value = savedOtRate;
+  document.getElementById('addModal').style.display = 'flex';
+}
 
-  <!-- 🔗 সোশ্যাল বার -->
-  <div class="social-bar">
-    <a href="https://www.facebook.com/share/19QErXkm4Q/" target="_blank" class="btn-facebook">
-      📘 Facebook Profile
-    </a>
-    <a href="https://www.tiktok.com/@kamrulhosen16?_r=1&_t=ZS-9AWbi35RrVd" target="_blank" class="btn-tiktok">
-      🎵 TikTok Profile
-    </a>
-  </div>
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
 
-  <!-- 📞 হেল্পলাইন বার -->
-  <div class="contact-bar">
-    <button class="btn-whatsapp" onclick="openWhatsApp()">💬 হোয়াটসঅ্যাপ সাপোর্ট</button>
-    <button class="btn-call" onclick="makeCall()">📞 কল হেল্পলাইন</button>
-  </div>
+// ৪. দৈনিক হিসাব সংরক্ষণ
+function saveDailyRecord() {
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) {
+    alert('প্রথমে আপনার পরিচয় সংরক্ষণ করুন।');
+    return;
+  }
 
-  <!-- 📱 বটম নেভিগেশন বার -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('home', this)">
-      <span>🏠</span>
-      <small>Home</small>
-    </button>
-    <button class="nav-item" onclick="switchTab('calendar', this)">
-      <span>📅</span>
-      <small>Calendar</small>
-    </button>
-    <button class="nav-item" onclick="switchTab('report', this)">
-      <span>📊</span>
-      <small>Report</small>
-    </button>
-    <button class="nav-item" onclick="switchTab('settings', this)">
-      <span>⚙️</span>
-      <small>Settings</small>
-    </button>
-  </nav>
+  const date = document.getElementById('form-date').value;
+  const duty = parseFloat(document.getElementById('form-duty').value) || 0;
+  const ot = parseFloat(document.getElementById('form-ot').value) || 0;
+  const rate = parseFloat(document.getElementById('form-rate').value) || 0;
+  const other = parseFloat(document.getElementById('form-other').value) || 0;
+  const note = document.getElementById('form-note').value || '';
 
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+  if (!date) {
+    alert('দয়া করে তারিখ নির্বাচন করুন।');
+    return;
+  }
+
+  localStorage.setItem('reliance_ot_rate_' + userId, rate);
+  if(document.getElementById('setting-ot-rate')) {
+    document.getElementById('setting-ot-rate').value = rate;
+  }
+
+  const otPay = ot * rate;
+
+  const recordData = {
+    date: date,
+    duty: duty,
+    ot: ot,
+    rate: rate,
+    otPay: otPay,
+    otherPay: other,
+    note: note,
+    timestamp: Date.now()
+  };
+
+  let localRecords = JSON.parse(localStorage.getItem('local_ot_records_' + userId) || '{}');
+  localRecords[date] = recordData;
+  localStorage.setItem('local_ot_records_' + userId, JSON.stringify(localRecords));
+
+  if (navigator.onLine && db) {
+    db.ref('ot_records/' + userId + '/' + date).set(recordData);
+  }
+
+  alert('হিসাব সফলভাবে সংরক্ষণ করা হয়েছে!');
+  closeAddModal();
+  loadUserOTData();
+}
+
+// ৫. ডাটা লোড ও বারসহ টেবিল প্রদর্শন
+function loadUserOTData() {
+  const userId = localStorage.getItem('reliance_user_id');
+  if (!userId) return;
+
+  const selectedMonth = document.getElementById('report-month').value;
+  const basicSalary = parseFloat(localStorage.getItem('reliance_basic_' + userId)) || 0;
+  const presentBonus = parseFloat(localStorage.getItem('reliance_bonus_' + userId)) || 0;
+  const absentDays = parseFloat(localStorage.getItem('reliance_absent_' + userId)) || 0;
+
+  let localRecords = JSON.parse(localStorage.getItem('local_ot_records_' + userId) || '{}');
+
+  const renderData = (records) => {
+    let totalDutyHours = 0;
+    let totalOtHours = 0;
+    let totalOtPay = 0;
+    let totalOtherPay = 0;
+
+    let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:12px; margin-top:8px;">';
+    historyHTML += '<tr style="background:#16a34a; color:white; font-size:13px;"><th>তারিখ ও বার</th><th>Duty</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
+
+    const todayKey = new Date().toISOString().split('T')[0];
+
+    const sortedDates = Object.keys(records).sort();
+
+    sortedDates.forEach((key) => {
+      const item = records[key];
+
+      if (item.date === todayKey) {
+        document.getElementById('today-duty').innerText = item.duty || 0;
+        document.getElementById('today-ot').innerText = item.ot || 0;
+        document.getElementById('today-ot-pay').innerText = item.otPay || 0;
+      }
+
+      if (item.date && item.date.startsWith(selectedMonth)) {
+        totalDutyHours += (item.duty || 0);
+        totalOtHours += (item.ot || 0);
+        totalOtPay += (item.otPay || 0);
+        totalOtherPay += (item.otherPay || 0);
+
+        const dayName = getBengaliDayName(item.date);
+        const formattedDate = `${item.date}<br><small style="color:#16a34a; font-weight:bold;">(${dayName})</small>`;
+
+        historyHTML += `<tr>
+          <td style="padding:6px; font-weight:500;">${formattedDate}</td>
+          <td>${item.duty} ঘণ্টা</td>
+          <td>${item.ot} ঘণ্টা</td>
+          <td>৳${item.rate}</td>
+          <td>৳${item.otPay}</td>
+        </tr>`;
+      }
+    });
+
+    historyHTML += '</table>';
+
+    document.getElementById('month-total').innerText = totalOtPay;
+    document.getElementById('ot-history-list').innerHTML = historyHTML;
+    if(document.getElementById('calendar-history-list')) {
+      document.getElementById('calendar-history-list').innerHTML = historyHTML;
+    }
+
+    // 🔴 Absent মাইনাস হিসাব
+    const absentHours = absentDays * 8;
+    const finalDutyHours = Math.max(0, totalDutyHours - absentHours);
+
+    const perDaySalary = basicSalary / 30;
+    const absentDeduction = absentDays * perDaySalary;
+    const adjustedBasic = Math.max(0, basicSalary - absentDeduction);
+
+    const absentInfoEl = document.getElementById('absent-deduct-info');
+    if (absentDays > 0) {
+      absentInfoEl.style.display = 'block';
+      absentInfoEl.innerText = `🔻 অনুপস্থিতি (${absentDays} দিন): -${absentHours} ঘণ্টা ডিউটি / -৳${Math.round(absentDeduction)} কর্তন`;
+    } else {
+      absentInfoEl.style.display = 'none';
+    }
+
+    const totalIncome = Math.round(adjustedBasic + presentBonus + totalOtPay + totalOtherPay);
+
+    document.getElementById('rep-duty-hours').innerText = finalDutyHours;
+    document.getElementById('rep-ot-hours').innerText = totalOtHours;
+    document.getElementById('rep-basic-salary').innerText = Math.round(adjustedBasic);
+    document.getElementById('rep-present-bonus').innerText = presentBonus;
+    document.getElementById('rep-ot-pay').innerText = totalOtPay;
+    document.getElementById('rep-other-pay').innerText = totalOtherPay;
+    document.getElementById('rep-total-income').innerText = totalIncome;
+  };
+
+  renderData(localRecords);
+
+  if (navigator.onLine && db) {
+    db.ref('ot_records/' + userId).on('value', (snap) => {
+      if (snap.exists()) {
+        const firebaseData = snap.val();
+        localStorage.setItem('local_ot_records_' + userId, JSON.stringify(firebaseData));
+        renderData(firebaseData);
+      }
+    });
+  }
+}
+
+// ৬. ট্যাব নেভিগেশন
+function switchTab(tabName, element) {
+  document.querySelectorAll('.tab-page').forEach(page => page.style.display = 'none');
+  document.getElementById('tab-' + tabName).style.display = 'block';
+
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  element.classList.add('active');
+}
+
+// ৭. কল ও হোয়াটসঅ্যাপ
+function makeCall() {
+  window.location.href = "tel:01734883213";
+}
+
+function openWhatsApp() {
+  window.location.href = "https://wa.me/8801734883213";
+}
