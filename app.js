@@ -28,7 +28,7 @@ if (typeof firebase !== 'undefined') {
   db = firebase.database();
 }
 
-// ১. অনলাইন ইউজার ও ভিজিটর
+// অনলাইন ইউজার ও ভিজিটর
 if (db) {
   const onlineRef = db.ref('presence/' + Date.now());
   const connectedRef = db.ref('.info/connected');
@@ -53,7 +53,7 @@ if (db) {
   });
 }
 
-// 🟢 তারিখ থেকে বাংলায় বারের নাম বের করার ফাংশন
+// তারিখ থেকে বাংলায় বারের নাম
 function getBengaliDayName(dateString) {
   if (!dateString) return '';
   const dateObj = new Date(dateString);
@@ -61,13 +61,13 @@ function getBengaliDayName(dateString) {
   return days[dateObj.getDay()] || '';
 }
 
-// ২. অটো লোড
+// অটো লোড
 window.onload = function() {
   const savedName = localStorage.getItem('reliance_user_name') || '';
-  const savedId = localStorage.getItem('reliance_user_id') || '';
+  const savedId = localStorage.getItem('reliance_user_id'] || '';
   
-  document.getElementById('user-name').value = savedName;
-  document.getElementById('user-id').value = savedId;
+  if(document.getElementById('user-name')) document.getElementById('user-name').value = savedName;
+  if(document.getElementById('user-id')) document.getElementById('user-id').value = savedId;
 
   if (savedId) {
     loadUserSettings(savedId);
@@ -75,13 +75,15 @@ window.onload = function() {
   }
 
   const today = new Date();
-  document.getElementById('form-date').valueAsDate = today;
+  if(document.getElementById('form-date')) document.getElementById('form-date').valueAsDate = today;
   
   const monthStr = today.toISOString().slice(0, 7);
-  document.getElementById('report-month').value = monthStr;
+  if(document.getElementById('report-month')) document.getElementById('report-month').value = monthStr;
 
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById('current-date-str').innerText = today.toLocaleDateString('bn-BD', options);
+  if(document.getElementById('current-date-str')) {
+    document.getElementById('current-date-str').innerText = today.toLocaleDateString('bn-BD', options);
+  }
 };
 
 // কাস্টম সেটিংস লোড
@@ -135,7 +137,7 @@ function saveSettings() {
   loadUserOTData();
 }
 
-// ৩. পপ-আপ মডাল
+// পপ-আপ মডাল
 function openAddModal() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) {
@@ -152,7 +154,7 @@ function closeAddModal() {
   document.getElementById('addModal').style.display = 'none';
 }
 
-// ৪. দৈনিক হিসাব সংরক্ষণ
+// দৈনিক হিসাব সংরক্ষণ
 function saveDailyRecord() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) {
@@ -203,13 +205,14 @@ function saveDailyRecord() {
   loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও আগের টেবিল মডেলে বারসহ প্রদর্শন (হোম পেজে শুধু চলতি মাস ফিল্টার করা)
+// ডাটা লোড ও মাসভিত্তিক ফিল্টার
 function loadUserOTData() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) return;
 
-  const selectedMonth = document.getElementById('report-month').value;
-  const currentMonthStr = new Date().toISOString().slice(0, 7); // বর্তমান মাস (যেমন: 2026-11)
+  const reportMonthEl = document.getElementById('report-month');
+  const selectedMonth = reportMonthEl ? reportMonthEl.value : new Date().toISOString().slice(0, 7);
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
   
   const basicSalary = parseFloat(localStorage.getItem('reliance_basic_' + userId)) || 0;
   const presentBonus = parseFloat(localStorage.getItem('reliance_bonus_' + userId)) || 0;
@@ -223,11 +226,11 @@ function loadUserOTData() {
     let totalOtPay = 0;
     let totalOtherPay = 0;
 
-    let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:13px; margin-top:8px;">';
-    historyHTML += '<tr style="background:#16a34a; color:white;"><th>তারিখ</th><th>Duty</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
+    let tableHeader = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:12px; margin-top:5px;">';
+    tableHeader += '<tr style="background:#16a34a; color:white;"><th>তারিখ</th><th>Duty</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
 
-    // ক্যালেন্ডার এবং রিপোর্টের জন্য পুরো মাসের টেবিল
-    let reportHistoryHTML = historyHTML;
+    let reportHistoryHTML = tableHeader;
+    let homeHistoryHTML = tableHeader;
 
     const todayKey = new Date().toISOString().split('T')[0];
     const sortedDates = Object.keys(records).sort();
@@ -236,11 +239,12 @@ function loadUserOTData() {
       const item = records[key];
 
       if (item.date === todayKey) {
-        document.getElementById('today-duty').innerText = item.duty || 0;
-        document.getElementById('today-ot').innerText = item.ot || 0;
-        document.getElementById('today-ot-pay').innerText = item.otPay || 0;
+        if(document.getElementById('today-duty')) document.getElementById('today-duty').innerText = item.duty || 0;
+        if(document.getElementById('today-ot')) document.getElementById('today-ot').innerText = item.ot || 0;
+        if(document.getElementById('today-ot-pay')) document.getElementById('today-ot-pay').innerText = '৳' + (item.otPay || 0);
       }
 
+      // রিপোর্ট ট্যাবের জন্য সিলেক্ট করা মাসের হিসাব
       if (item.date && item.date.startsWith(selectedMonth)) {
         totalDutyHours += (item.duty || 0);
         totalOtHours += (item.ot || 0);
@@ -251,9 +255,9 @@ function loadUserOTData() {
         const formattedDate = `${item.date}<br><small style="color:#16a34a; font-weight:bold;">(${dayName})</small>`;
 
         reportHistoryHTML += `<tr>
-          <td style="padding:6px; font-weight:500;">${formattedDate}</td>
-          <td>${item.duty} ঘণ্টা</td>
-          <td>${item.ot} ঘণ্টা</td>
+          <td style="padding:5px;">${formattedDate}</td>
+          <td>${item.duty}ঘণ্টা</td>
+          <td>${item.ot}ঘণ্টা</td>
           <td>৳${item.rate}</td>
           <td>৳${item.otPay}</td>
         </tr>`;
@@ -262,18 +266,19 @@ function loadUserOTData() {
 
     reportHistoryHTML += '</table>';
 
-    // হোম পেজের লিস্ট টেবিল (এখানে শুধু চলতি মাসের ডেটা ফিল্টার হয়ে দেখাবে)
-    let homeHistoryHTML = historyHTML;
+    // হোম পেজের লিস্টে শুধু চলতি মাসের হিসাব ফিল্টার করা
+    let currentMonthOtTotal = 0;
     sortedDates.forEach((key) => {
       const item = records[key];
       if (item.date && item.date.startsWith(currentMonthStr)) {
+        currentMonthOtTotal += (item.otPay || 0);
         const dayName = getBengaliDayName(item.date);
         const formattedDate = `${item.date}<br><small style="color:#16a34a; font-weight:bold;">(${dayName})</small>`;
 
         homeHistoryHTML += `<tr>
-          <td style="padding:6px; font-weight:500;">${formattedDate}</td>
-          <td>${item.duty} ঘণ্টা</td>
-          <td>${item.ot} ঘণ্টা</td>
+          <td style="padding:5px;">${formattedDate}</td>
+          <td>${item.duty}ঘণ্টা</td>
+          <td>${item.ot}ঘণ্টা</td>
           <td>৳${item.rate}</td>
           <td>৳${item.otPay}</td>
         </tr>`;
@@ -281,41 +286,36 @@ function loadUserOTData() {
     });
     homeHistoryHTML += '</table>';
 
-    document.getElementById('month-total').innerText = totalOtPay;
-    
-    // হোম পেজের নিচে শুধু চলতি মাসের লিস্ট দেখাবে
-    document.getElementById('ot-history-list').innerHTML = homeHistoryHTML;
-    
-    // ক্যালেন্ডার বা রিপোর্ট ট্যাবে সিলেক্ট করা মাসের ফুল লিস্ট দেখাবে
-    if(document.getElementById('calendar-history-list')) {
-      document.getElementById('calendar-history-list').innerHTML = reportHistoryHTML;
-    }
+    if(document.getElementById('month-total')) document.getElementById('month-total').innerText = currentMonthOtTotal;
+    if(document.getElementById('ot-history-list')) document.getElementById('ot-history-list').innerHTML = homeHistoryHTML;
+    if(document.getElementById('calendar-history-list')) document.getElementById('calendar-history-list').innerHTML = reportHistoryHTML;
 
-    // 🔴 Absent মাইনাস হিসাব
+    // Absent হিসাব
     const absentHours = absentDays * 8;
     const finalDutyHours = Math.max(0, totalDutyHours - absentHours);
-
     const perDaySalary = basicSalary / 30;
     const absentDeduction = absentDays * perDaySalary;
     const adjustedBasic = Math.max(0, basicSalary - absentDeduction);
 
     const absentInfoEl = document.getElementById('absent-deduct-info');
-    if (absentDays > 0) {
-      absentInfoEl.style.display = 'block';
-      absentInfoEl.innerText = `🔻 অনুপস্থিতি (${absentDays} দিন): -${absentHours} ঘণ্টা ডিউটি / -৳${Math.round(absentDeduction)} কর্তন`;
-    } else {
-      absentInfoEl.style.display = 'none';
+    if (absentInfoEl) {
+      if (absentDays > 0) {
+        absentInfoEl.style.display = 'block';
+        absentInfoEl.innerText = `🔻 অনুপস্থিতি (${absentDays} দিন): -${absentHours} ঘণ্টা ডিউটি / -৳${Math.round(absentDeduction)} কর্তন`;
+      } else {
+        absentInfoEl.style.display = 'none';
+      }
     }
 
     const totalIncome = Math.round(adjustedBasic + presentBonus + totalOtPay + totalOtherPay);
 
-    document.getElementById('rep-duty-hours').innerText = finalDutyHours;
-    document.getElementById('rep-ot-hours').innerText = totalOtHours;
-    document.getElementById('rep-basic-salary').innerText = Math.round(adjustedBasic);
-    document.getElementById('rep-present-bonus').innerText = presentBonus;
-    document.getElementById('rep-ot-pay').innerText = totalOtPay;
-    document.getElementById('rep-other-pay').innerText = totalOtherPay;
-    document.getElementById('rep-total-income').innerText = totalIncome;
+    if(document.getElementById('rep-duty-hours')) document.getElementById('rep-duty-hours').innerText = finalDutyHours;
+    if(document.getElementById('rep-ot-hours')) document.getElementById('rep-ot-hours').innerText = totalOtHours;
+    if(document.getElementById('rep-basic-salary')) document.getElementById('rep-basic-salary').innerText = Math.round(adjustedBasic);
+    if(document.getElementById('rep-present-bonus')) document.getElementById('rep-present-bonus').innerText = presentBonus;
+    if(document.getElementById('rep-ot-pay')) document.getElementById('rep-ot-pay').innerText = totalOtPay;
+    if(document.getElementById('rep-other-pay')) document.getElementById('rep-other-pay').innerText = totalOtherPay;
+    if(document.getElementById('rep-total-income')) document.getElementById('rep-total-income').innerText = totalIncome;
   };
 
   renderData(localRecords);
@@ -331,16 +331,19 @@ function loadUserOTData() {
   }
 }
 
-// ৬. ট্যাব নেভিগেশন
+// ট্যাব নেভিগেশন
 function switchTab(tabName, element) {
   document.querySelectorAll('.tab-page').forEach(page => page.style.display = 'none');
-  document.getElementById('tab-' + tabName).style.display = 'block';
+  const targetTab = document.getElementById('tab-' + tabName);
+  if (targetTab) targetTab.style.display = 'block';
 
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-  element.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.style.color = '#64748b';
+  });
+  element.style.color = '#16a34a';
 }
 
-// ৭. কল ও হোয়াটসঅ্যাপ
+// কল ও হোয়াটসঅ্যাপ
 function makeCall() {
   window.location.href = "tel:01734883213";
 }
