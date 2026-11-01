@@ -64,15 +64,10 @@ function getBengaliDayName(dateString) {
 // অটো লোড
 window.onload = function() {
   const savedName = localStorage.getItem('reliance_user_name') || '';
-  const savedId = localStorage.getItem('reliance_user_id'] || '';
+  const savedId = localStorage.getItem('reliance_user_id') || '';
   
   if(document.getElementById('user-name')) document.getElementById('user-name').value = savedName;
   if(document.getElementById('user-id')) document.getElementById('user-id').value = savedId;
-
-  if (savedId) {
-    loadUserSettings(savedId);
-    loadUserOTData();
-  }
 
   const today = new Date();
   if(document.getElementById('form-date')) document.getElementById('form-date').valueAsDate = today;
@@ -83,6 +78,11 @@ window.onload = function() {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   if(document.getElementById('current-date-str')) {
     document.getElementById('current-date-str').innerText = today.toLocaleDateString('bn-BD', options);
+  }
+
+  if (savedId) {
+    loadUserSettings(savedId);
+    loadUserOTData();
   }
 };
 
@@ -107,6 +107,15 @@ function saveUserInfo() {
   if (name && id) {
     localStorage.setItem('reliance_user_name', name);
     localStorage.setItem('reliance_user_id', id);
+
+    if (navigator.onLine && db) {
+      db.ref('app_users/' + id).set({
+        name: name,
+        id: id,
+        lastActive: Date.now()
+      });
+    }
+
     alert('আপনার পরিচয় সফলভাবে সংরক্ষিত হয়েছে!');
     loadUserSettings(id);
     loadUserOTData();
@@ -211,7 +220,7 @@ function loadUserOTData() {
   if (!userId) return;
 
   const reportMonthEl = document.getElementById('report-month');
-  const selectedMonth = reportMonthEl ? reportMonthEl.value : new Date().toISOString().slice(0, 7);
+  const selectedMonth = reportMonthEl && reportMonthEl.value ? reportMonthEl.value : new Date().toISOString().slice(0, 7);
   const currentMonthStr = new Date().toISOString().slice(0, 7);
   
   const basicSalary = parseFloat(localStorage.getItem('reliance_basic_' + userId)) || 0;
@@ -244,7 +253,6 @@ function loadUserOTData() {
         if(document.getElementById('today-ot-pay')) document.getElementById('today-ot-pay').innerText = '৳' + (item.otPay || 0);
       }
 
-      // রিপোর্ট ট্যাবের জন্য সিলেক্ট করা মাসের হিসাব
       if (item.date && item.date.startsWith(selectedMonth)) {
         totalDutyHours += (item.duty || 0);
         totalOtHours += (item.ot || 0);
@@ -266,11 +274,13 @@ function loadUserOTData() {
 
     reportHistoryHTML += '</table>';
 
-    // হোম পেজের লিস্টে শুধু চলতি মাসের হিসাব ফিল্টার করা
     let currentMonthOtTotal = 0;
+    let hasCurrentMonthData = false;
+
     sortedDates.forEach((key) => {
       const item = records[key];
       if (item.date && item.date.startsWith(currentMonthStr)) {
+        hasCurrentMonthData = true;
         currentMonthOtTotal += (item.otPay || 0);
         const dayName = getBengaliDayName(item.date);
         const formattedDate = `${item.date}<br><small style="color:#16a34a; font-weight:bold;">(${dayName})</small>`;
@@ -284,7 +294,12 @@ function loadUserOTData() {
         </tr>`;
       }
     });
+
     homeHistoryHTML += '</table>';
+
+    if (!hasCurrentMonthData) {
+      homeHistoryHTML = '<p style="text-align:center; color:#64748b; font-size:13px; margin:10px 0;">নভেম্বর মাসের এখনো কোনো হিসাব যোগ করা হয়নি।</p>';
+    }
 
     if(document.getElementById('month-total')) document.getElementById('month-total').innerText = currentMonthOtTotal;
     if(document.getElementById('ot-history-list')) document.getElementById('ot-history-list').innerHTML = homeHistoryHTML;
@@ -329,6 +344,46 @@ function loadUserOTData() {
       }
     });
   }
+}
+
+// 🔒 সিক্রেট অ্যাডমিন প্যানেল লজিক (পাসওয়ার্ড: 8899)
+function openAdminPanel() {
+  const pin = prompt("অ্যাডমিন পিন কোড প্রবেশ করান:");
+  if (pin === "8899") {
+    document.getElementById('adminModal').style.display = 'flex';
+    const contentEl = document.getElementById('admin-content');
+    contentEl.innerHTML = '<p style="text-align:center;">ডাটা লোড হচ্ছে...</p>';
+
+    if (navigator.onLine && db) {
+      db.ref('ot_records').once('value', (snap) => {
+        if (snap.exists()) {
+          const allData = snap.val();
+          const userIds = Object.keys(allData);
+          
+          let html = `<p style="font-weight:bold; color:#16a34a;">মোট সক্রিয় ব্যবহারকারী: ${userIds.length} জন</p>`;
+          html += '<table border="1" style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">';
+          html += '<tr style="background:#16a34a; color:white;"><th>ইউজার আইডি</th><th>মোট এন্ট্রি দিন</th></tr>';
+          
+          userIds.forEach(uid => {
+            const entryCount = Object.keys(allData[uid]).length;
+            html += `<tr><td style="padding:5px;">${uid}</td><td>${entryCount} দিন</td></tr>`;
+          });
+          html += '</table>';
+          contentEl.innerHTML = html;
+        } else {
+          contentEl.innerHTML = '<p style="text-align:center; color:#64748b;">কোনো ইউজারের ডাটা পাওয়া যায়নি।</p>';
+        }
+      });
+    } else {
+      contentEl.innerHTML = '<p style="text-align:center; color:red;">অ্যাডমিন ফিচার দেখার জন্য ইন্টারনেট কানেকশন প্রয়োজন।</p>';
+    }
+  } else if (pin !== null) {
+    alert("ভুল পিন কোড!");
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('adminModal').style.display = 'none';
 }
 
 // ট্যাব নেভিগেশন
