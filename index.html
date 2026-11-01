@@ -12,112 +12,163 @@
 
   <!-- অ্যাপের মূল হেডার -->
   <header style="background: #16a34a; color: white; padding: 12px; text-align: center;">
-    <h2>Reliance Job & OT</h2>
-    <p style="margin: 0; font-size: 14px;">RELIANCE DRESSES LIMITED</p>
+    <h2 style="margin:0; font-size:20px;">Reliance Job & OT</h2>
+    <p style="margin: 0; font-size: 13px;">RELIANCE DRESSES_LIMITED</p>
+    <div style="margin-top: 5px; font-size: 12px; background: rgba(0,0,0,0.15); padding: 3px; border-radius: 4px;">
+      🟢 অনলাইন ইউজার: <span id="live-online">1</span> | 👁️ মোট ভিজিটর: <span id="total-visitors">0</span>
+    </div>
   </header>
 
   <!-- প্রধান কন্টেন্ট পেজ -->
-  <div class="container" style="padding: 15px;">
+  <div class="container" style="padding: 12px; padding-bottom: 70px;">
     
-    <!-- ইউজার আইডি ও নাম সেকশন -->
-    <div style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
-      <label style="font-size: 13px; font-weight: bold;">নাম:</label>
-      <input type="text" id="user-name" placeholder="আপনার নাম লিখুন" style="width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
-      
-      <label style="font-size: 13px; font-weight: bold;">আইডি নম্বর:</label>
-      <input type="text" id="user-id" placeholder="আপনার আইডি লিখুন" style="width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
-      
-      <button onclick="saveUserInfo()" style="background: #16a34a; color: white; border: none; padding: 8px 15px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer;">সংরক্ষণ করুন</button>
-    </div>
-
-    <!-- বর্তমান তারিখ ও আজকের সারাংশ -->
-    <div style="text-align: center; margin-bottom: 15px;">
-      <span id="current-date-str" style="font-size: 14px; font-weight: bold; color: #334155;"></span>
-    </div>
-
-    <!-- হোম পেজ লিস্ট এবং অন্যান্য ট্যাব কন্টেন্ট -->
+    <!-- ট্যাব ১: হোম পেজ -->
     <div id="tab-home" class="tab-page">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h3 style="margin: 0; font-size: 16px;">চলতি মাসের হিসাব</h3>
-        <button onclick="openAddModal()" style="background: #16a34a; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">+ হিসাব যোগ করুন</button>
+      <!-- ইউজার আইডি ও নাম সেকশন -->
+      <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <label style="font-size: 13px; font-weight: bold; color: #334155;">আপনার পরিচয় ইনপুট দিন</label>
+        <input type="text" id="user-name" placeholder="আপনার নাম" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        <input type="text" id="user-id" placeholder="আপনার আইডি নম্বর" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        <button onclick="saveUserInfo()" style="background: #16a34a; color: white; border: none; padding: 8px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer;">সংরক্ষণ করুন</button>
       </div>
 
-      <!-- ওটি হিস্ট্রি টেবিল লিস্ট -->
-      <div id="ot-history-list"></div>
+      <!-- আজকের ডিউটি ও ওটি হিসাব -->
+      <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #16a34a;">📅 আজকের ডিউটি ও ওটি হিসাব</h4>
+        <p id="current-date-str" style="font-size: 12px; color: #64748b; margin-bottom: 8px;"></p>
+        <div style="display: flex; gap: 8px; text-align: center;">
+          <div style="flex:1; background:#f0fdf4; padding:8px; border-radius:6px; border:1px solid #bbf7d0;">
+            <small style="color:#166534;">ডিউটি</small>
+            <div style="font-weight:bold; font-size:15px;" id="today-duty">0</div>
+          </div>
+          <div style="flex:1; background:#f0fdf4; padding:8px; border-radius:6px; border:1px solid #bbf7d0;">
+            <small style="color:#166534;">আজকের OT</small>
+            <div style="font-weight:bold; font-size:15px;" id="today-ot">0</div>
+          </div>
+          <div style="flex:1; background:#f0fdf4; padding:8px; border-radius:6px; border:1px solid #bbf7d0;">
+            <small style="color:#166534;">OT আয়</small>
+            <div style="font-weight:bold; font-size:15px;" id="today-ot-pay">৳0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- চলতি মাসের ওটি মোট আয় -->
+      <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h4 style="margin: 0; font-size: 14px; color: #16a34a;">📊 চলতি মাসের ওটি মোট আয়</h4>
+          <button onclick="openAddModal()" style="background: #16a34a; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;">+ হিসাব যোগ করুন</button>
+        </div>
+        <div style="font-size: 18px; font-weight: bold; color: #15803d; margin-bottom: 8px;">৳<span id="month-total">0</span></div>
+        <div id="ot-history-list" style="overflow-x: auto;"></div>
+      </div>
+
+      <!-- সোশ্যাল ও হেল্পলাইন বাটন -->
+      <div style="margin-top: 15px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <button onclick="window.open('https://facebook.com', '_blank')" style="background: #2563eb; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; flex: 1;">Facebook Profile</button>
+          <button onclick="window.open('https://tiktok.com', '_blank')" style="background: #0f172a; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; flex: 1;">TikTok Profile</button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="openWhatsApp()" style="background: #22c55e; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; flex: 1;">হোয়াটসঅ্যাপ সাপোর্ট</button>
+          <button onclick="makeCall()" style="background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; flex: 1;">কল হেল্পলাইন</button>
+        </div>
+      </div>
     </div>
 
-    <!-- সোশ্যাল ও ডাউনলোড বাটন সেকশন -->
-    <div style="margin-top: 30px; text-align: center;">
-      <!-- নতুন যুক্ত করা এক ক্লিকে অ্যাপ ইনস্টল বাটন -->
-      <div style="margin-bottom: 15px;">
-        <button onclick="installApp()" style="background: #16a34a; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); width: 100%;">
-          📥 এক ক্লিকে অ্যাপ ডাউনলোড ও ইনস্টল করুন
-        </button>
-      </div>
+    <!-- ট্যাব ২: ক্যালেন্ডার পেজ -->
+    <div id="tab-calendar" class="tab-page" style="display: none;">
+      <h3 style="font-size: 16px; color: #16a34a;">📅 ক্যালেন্ডার ও তারিখভিত্তিক হিসাব</h3>
+      <div id="calendar-history-list" style="overflow-x: auto; margin-top: 10px;"></div>
+    </div>
 
-      <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;">
-        <button onclick="window.open('https://facebook.com', '_blank')" style="background: #2563eb; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1;">Facebook Profile</button>
-        <button onclick="window.open('https://tiktok.com', '_blank')" style="background: #0f172a; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1;">TikTok Profile</button>
+    <!-- ট্যাব ৩: রিপোর্ট পেজ -->
+    <div id="tab-report" class="tab-page" style="display: none;">
+      <h3 style="font-size: 16px; color: #16a34a;">📈 মাসিক স্যালারি ও ওটি রিপোর্ট</h3>
+      <label style="font-size: 13px; font-weight: bold;">মাস নির্বাচন করুন:</label>
+      <input type="month" id="report-month" onchange="loadUserOTData()" style="width: 100%; padding: 8px; margin: 5px 0 12px 0; border: 1px solid #cbd5e1; border-radius: 4px;">
+      
+      <div id="absent-deduct-info" style="display:none; background:#ffeeee; color:#c53030; padding:8px; border-radius:4px; font-size:12px; margin-bottom:8px;"></div>
+
+      <div style="background: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px;">
+        <p>মোট ডিউটি ঘণ্টা: <span id="rep-duty-hours" style="font-weight:bold;">0</span> ঘণ্টা</p>
+        <p>মোট ওটি (OT) ঘণ্টা: <span id="rep-ot-hours" style="font-weight:bold;">0</span> ঘণ্টা</p>
+        <hr style="border:0; border-top:1px solid #eee; margin:8px 0;">
+        <p>বেসিক স্যালারি: ৳<span id="rep-basic-salary">0</span></p>
+        <p>হাজিরা বোনাস: ৳<span id="rep-present-bonus">0</span></p>
+        <p>ওটি (OT) বাবদ মোট: ৳<span id="rep-ot-pay">0</span></p>
+        <p>অন্যান্য পাওনা: ৳<span id="rep-other-pay">0</span></p>
+        <hr style="border:0; border-top:1px solid #eee; margin:8px 0;">
+        <p style="font-size: 16px; font-weight: bold; color: #16a34a;">সর্বমোট প্রাপ্য বেতন: ৳<span id="rep-total-income">0</span></p>
       </div>
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button onclick="openWhatsApp()" style="background: #22c55e; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1;">হোয়াটসঅ্যাপ সাপোর্ট</button>
-        <button onclick="makeCall()" style="background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1;">কল হেল্পলাইন</button>
+    </div>
+
+    <!-- ট্যাব ৪: সেটিংস পেজ -->
+    <div id="tab-settings" class="tab-page" style="display: none;">
+      <h3 style="font-size: 16px; color: #16a34a;">⚙️ কাস্টম সেটিংস</h3>
+      <div style="background: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <label style="font-size: 13px; font-weight: bold;">বেসিক স্যালারি (মাসিক):</label>
+        <input type="number" id="setting-basic" style="width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+
+        <label style="font-size: 13px; font-weight: bold;">ওটি (OT) রেট (প্রতি ঘণ্টা):</label>
+        <input type="number" id="setting-ot-rate" style="width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+
+        <label style="font-size: 13px; font-weight: bold;">হাজিরা বোনাস:</label>
+        <input type="number" id="setting-present-bonus" style="width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+
+        <label style="font-size: 13px; font-weight: bold;">অনুপস্থিতি (Absent দিন):</label>
+        <input type="number" id="setting-absent-days" value="0" style="width: 100%; padding: 8px; margin-top: 4px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">
+
+        <button onclick="saveSettings()" style="background: #16a34a; color: white; border: none; padding: 10px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer;">সেটিংস সংরক্ষণ করুন</button>
       </div>
     </div>
 
   </div>
 
+  <!-- নিচের নেভিগেশন বার (Bottom Navigation) -->
+  <nav style="position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-around; padding: 8px 0; z-index: 999; box-shadow: 0 -2px 5px rgba(0,0,0,0.05);">
+    <div class="nav-item active" onclick="switchTab('home', this)" style="text-align: center; cursor: pointer; color: #16a34a; font-size: 12px; font-weight: bold;">
+      <div style="font-size: 18px;">🏠</div>Home
+    </div>
+    <div class="nav-item" onclick="switchTab('calendar', this)" style="text-align: center; cursor: pointer; color: #64748b; font-size: 12px; font-weight: bold;">
+      <div style="font-size: 18px;">📅</div>Calendar
+    </div>
+    <div class="nav-item" onclick="switchTab('report', this)" style="text-align: center; cursor: pointer; color: #64748b; font-size: 12px; font-weight: bold;">
+      <div style="font-size: 18px;">📈</div>Report
+    </div>
+    <div class="nav-item" onclick="switchTab('settings', this)" style="text-align: center; cursor: pointer; color: #64748b; font-size: 12px; font-weight: bold;">
+      <div style="font-size: 18px;">⚙️</div>Settings
+    </div>
+  </nav>
+
   <!-- পপ-আপ মডাল (হিসাব যোগ করার জন্য) -->
   <div id="addModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
-    <div style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px;">
-      <h3>দৈনিক হিসাব যোগ করুন</h3>
-      <label>তারিখ:</label>
-      <input type="date" id="form-date" style="width: 100%; padding: 6px; margin-bottom: 8px;">
+    <div style="background: white; padding: 15px; border-radius: 8px; width: 90%; max-width: 350px;">
+      <h3 style="margin-top:0; font-size:16px; color:#16a34a;">দৈনিক হিসাব যোগ করুন</h3>
+      <label style="font-size:12px;">তারিখ:</label>
+      <input type="date" id="form-date" style="width: 100%; padding: 6px; margin-bottom: 6px; border:1px solid #ccc; border-radius:4px;">
       
-      <label>ডিউটি ঘণ্টা:</label>
-      <input type="number" id="form-duty" value="8" style="width: 100%; padding: 6px; margin-bottom: 8px;">
+      <label style="font-size:12px;">ডিউটি ঘণ্টা:</label>
+      <input type="number" id="form-duty" value="8" style="width: 100%; padding: 6px; margin-bottom: 6px; border:1px solid #ccc; border-radius:4px;">
       
-      <label>ওটি (OT) ঘণ্টা:</label>
-      <input type="number" id="form-ot" value="0" style="width: 100%; padding: 6px; margin-bottom: 8px;">
+      <label style="font-size:12px;">ওটি (OT) ঘণ্টা:</label>
+      <input type="number" id="form-ot" value="0" style="width: 100%; padding: 6px; margin-bottom: 6px; border:1px solid #ccc; border-radius:4px;">
       
-      <label>ওটি রেট:</label>
-      <input type="number" id="form-rate" value="53" style="width: 100%; padding: 6px; margin-bottom: 8px;">
+      <label style="font-size:12px;">ওটি রেট:</label>
+      <input type="number" id="form-rate" value="53" style="width: 100%; padding: 6px; margin-bottom: 6px; border:1px solid #ccc; border-radius:4px;">
       
-      <label>অন্যান্য পাওনা:</label>
-      <input type="number" id="form-other" value="0" style="width: 100%; padding: 6px; margin-bottom: 8px;">
+      <label style="font-size:12px;">অন্যান্য পাওনা:</label>
+      <input type="number" id="form-other" value="0" style="width: 100%; padding: 6px; margin-bottom: 6px; border:1px solid #ccc; border-radius:4px;">
       
-      <label>নোট:</label>
-      <input type="text" id="form-note" placeholder="কিছু লিখতে চাইলে..." style="width: 100%; padding: 6px; margin-bottom: 12px;">
+      <label style="font-size:12px;">নোট:</label>
+      <input type="text" id="form-note" placeholder="কিছু লিখতে চাইলে..." style="width: 100%; padding: 6px; margin-bottom: 10px; border:1px solid #ccc; border-radius:4px;">
 
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 8px;">
         <button onclick="saveDailyRecord()" style="background: #16a34a; color: white; border: none; padding: 8px; flex: 1; border-radius: 4px; font-weight: bold; cursor: pointer;">সেভ করুন</button>
         <button onclick="closeAddModal()" style="background: #ef4444; color: white; border: none; padding: 8px; flex: 1; border-radius: 4px; font-weight: bold; cursor: pointer;">বাতিল</button>
       </div>
     </div>
   </div>
 
-  <!-- স্ক্রিপ্ট ফাইল লিংক -->
   <script src="app.js"></script>
-  <script>
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-    });
-
-    function installApp() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-          }
-          deferredPrompt = null;
-        });
-      } else {
-        alert('আপনার ব্রাউজারের মেনু (...) এ গিয়ে "Add to Home Screen" বা "Install App" সিলেক্ট করে ইনস্টল করে নিন।');
-      }
-    }
-  </script>
 </body>
 </html>
