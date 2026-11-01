@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reliance Job & OT - RDL OT</title>
+  <title>Reliance Job & OT - RDL OT | রিলায়েন্স জব এন্ড ওটি হিসাব</title>
+  <meta name="description" content="Reliance Job & OT - garments worker duty and overtime calculation app by MD Kamrul Hosen.">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#16a34a">
@@ -13,7 +14,7 @@
   <!-- অ্যাপের মূল হেডার -->
   <header style="background: #16a34a; color: white; padding: 12px; text-align: center;">
     <h2 style="margin:0; font-size:20px;">Reliance Job & OT</h2>
-    <p style="margin: 0; font-size: 13px;">RELIANCE DRESSES_LIMITED</p>
+    <p style="margin: 0; font-size: 13px;">RELIANCE DRESSES LIMITED</p>
     <div style="margin-top: 5px; font-size: 12px; background: rgba(0,0,0,0.15); padding: 3px; border-radius: 4px;">
       🟢 অনলাইন ইউজার: <span id="live-online">1</span> | 👁️ মোট ভিজিটর: <span id="total-visitors">0</span>
     </div>
@@ -24,7 +25,6 @@
     
     <!-- ট্যাব ১: হোম পেজ -->
     <div id="tab-home" class="tab-page">
-      <!-- ইউজার আইডি ও নাম সেকশন -->
       <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <label style="font-size: 13px; font-weight: bold; color: #334155;">আপনার পরিচয় ইনপুট দিন</label>
         <input type="text" id="user-name" placeholder="আপনার নাম" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
@@ -32,7 +32,14 @@
         <button onclick="saveUserInfo()" style="background: #16a34a; color: white; border: none; padding: 8px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer;">সংরক্ষণ করুন</button>
       </div>
 
-      <!-- আজকের ডিউটি ও ওটি হিসাব -->
+      <!-- এক ক্লিকে অ্যাপ ইনস্টল করার সুন্দর ও আধুনিক বাটন -->
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 8px; margin-bottom: 12px; text-align: center;">
+        <p style="margin: 0 0 6px 0; font-size: 12px; color: #166534; font-weight: bold;">📱 অ্যাপটি আপনার মোবাইলে সরাসরি ইনস্টল করুন:</p>
+        <button onclick="installAppPrompt()" style="background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          📥 হোম স্ক্রিনে অ্যাপ ইনস্টল করুন
+        </button>
+      </div>
+
       <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #16a34a;">📅 আজকের ডিউটি ও ওটি হিসাব</h4>
         <p id="current-date-str" style="font-size: 12px; color: #64748b; margin-bottom: 8px;"></p>
@@ -52,7 +59,6 @@
         </div>
       </div>
 
-      <!-- চলতি মাসের ওটি মোট আয় -->
       <div style="background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <h4 style="margin: 0; font-size: 14px; color: #16a34a;">📊 চলতি মাসের ওটি মোট আয়</h4>
@@ -62,7 +68,6 @@
         <div id="ot-history-list" style="overflow-x: auto;"></div>
       </div>
 
-      <!-- সোশ্যাল ও হেল্পলাইন বাটন -->
       <div style="margin-top: 15px;">
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
           <button onclick="window.open('https://facebook.com', '_blank')" style="background: #2563eb; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; flex: 1;">Facebook Profile</button>
@@ -120,11 +125,16 @@
 
         <button onclick="saveSettings()" style="background: #16a34a; color: white; border: none; padding: 10px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer;">সেটিংস সংরক্ষণ করুন</button>
       </div>
+
+      <!-- গোপন অ্যাডমিন প্যানেল বাটন (পাসওয়ার্ড: 8899) -->
+      <div style="margin-top: 25px; text-align: center;">
+        <button onclick="openAdminPanel()" style="background: transparent; color: #94a3b8; border: none; font-size: 11px; cursor: pointer;">🔒 System Admin Login</button>
+      </div>
     </div>
 
   </div>
 
-  <!-- নিচের নেভিগেশন বার (Bottom Navigation) -->
+  <!-- নেভিগেশন বার -->
   <nav style="position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-around; padding: 8px 0; z-index: 999; box-shadow: 0 -2px 5px rgba(0,0,0,0.05);">
     <div class="nav-item active" onclick="switchTab('home', this)" style="text-align: center; cursor: pointer; color: #16a34a; font-size: 12px; font-weight: bold;">
       <div style="font-size: 18px;">🏠</div>Home
@@ -169,6 +179,36 @@
     </div>
   </div>
 
+  <!-- পপ-আপ মডাল (সিক্রেট অ্যাডমিন দেখার জন্য) -->
+  <div id="adminModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1001;">
+    <div style="background: white; padding: 15px; border-radius: 8px; width: 90%; max-width: 380px; max-height: 80vh; overflow-y: auto;">
+      <h3 style="margin-top:0; font-size:16px; color:#16a34a; text-align:center;">🔒 অ্যাডমিন ড্যাশবোর্ড</h3>
+      <div id="admin-content"></div>
+      <button onclick="closeAdminModal()" style="background: #ef4444; color: white; border: none; padding: 8px; width: 100%; border-radius: 4px; font-weight: bold; margin-top: 10px; cursor: pointer;">বন্ধ করুন</button>
+    </div>
+  </div>
+
   <script src="app.js"></script>
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    function installAppPrompt() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        alert('আপনার ব্রাউজারের মেনু (...) বা অপশনে গিয়ে "Add to Home Screen" বা "Install App" সিলেক্ট করে ইনস্টল করে নিন।');
+      }
+    }
+  </script>
 </body>
 </html>
