@@ -203,12 +203,14 @@ function saveDailyRecord() {
   loadUserOTData();
 }
 
-// ৫. ডাটা লোড ও আগের টেবিল মডেলে বারসহ প্রদর্শন
+// ৫. ডাটা লোড ও আগের টেবিল মডেলে বারসহ প্রদর্শন (হোম পেজে শুধু চলতি মাস ফিল্টার করা)
 function loadUserOTData() {
   const userId = localStorage.getItem('reliance_user_id');
   if (!userId) return;
 
   const selectedMonth = document.getElementById('report-month').value;
+  const currentMonthStr = new Date().toISOString().slice(0, 7); // বর্তমান মাস (যেমন: 2026-11)
+  
   const basicSalary = parseFloat(localStorage.getItem('reliance_basic_' + userId)) || 0;
   const presentBonus = parseFloat(localStorage.getItem('reliance_bonus_' + userId)) || 0;
   const absentDays = parseFloat(localStorage.getItem('reliance_absent_' + userId)) || 0;
@@ -224,8 +226,10 @@ function loadUserOTData() {
     let historyHTML = '<table border="1" style="width:100%; text-align:center; border-collapse:collapse; font-size:13px; margin-top:8px;">';
     historyHTML += '<tr style="background:#16a34a; color:white;"><th>তারিখ</th><th>Duty</th><th>OT</th><th>রেট</th><th>টাকা</th></tr>';
 
-    const todayKey = new Date().toISOString().split('T')[0];
+    // ক্যালেন্ডার এবং রিপোর্টের জন্য পুরো মাসের টেবিল
+    let reportHistoryHTML = historyHTML;
 
+    const todayKey = new Date().toISOString().split('T')[0];
     const sortedDates = Object.keys(records).sort();
 
     sortedDates.forEach((key) => {
@@ -246,7 +250,7 @@ function loadUserOTData() {
         const dayName = getBengaliDayName(item.date);
         const formattedDate = `${item.date}<br><small style="color:#16a34a; font-weight:bold;">(${dayName})</small>`;
 
-        historyHTML += `<tr>
+        reportHistoryHTML += `<tr>
           <td style="padding:6px; font-weight:500;">${formattedDate}</td>
           <td>${item.duty} ঘণ্টা</td>
           <td>${item.ot} ঘণ্টা</td>
@@ -256,12 +260,35 @@ function loadUserOTData() {
       }
     });
 
-    historyHTML += '</table>';
+    reportHistoryHTML += '</table>';
+
+    // হোম পেজের লিস্ট টেবিল (এখানে শুধু চলতি মাসের ডেটা ফিল্টার হয়ে দেখাবে)
+    let homeHistoryHTML = historyHTML;
+    sortedDates.forEach((key) => {
+      const item = records[key];
+      if (item.date && item.date.startsWith(currentMonthStr)) {
+        const dayName = getBengaliDayName(item.date);
+        const formattedDate = `${item.date}<br><small style="color:#16a34a; font-weight:bold;">(${dayName})</small>`;
+
+        homeHistoryHTML += `<tr>
+          <td style="padding:6px; font-weight:500;">${formattedDate}</td>
+          <td>${item.duty} ঘণ্টা</td>
+          <td>${item.ot} ঘণ্টা</td>
+          <td>৳${item.rate}</td>
+          <td>৳${item.otPay}</td>
+        </tr>`;
+      }
+    });
+    homeHistoryHTML += '</table>';
 
     document.getElementById('month-total').innerText = totalOtPay;
-    document.getElementById('ot-history-list').innerHTML = historyHTML;
+    
+    // হোম পেজের নিচে শুধু চলতি মাসের লিস্ট দেখাবে
+    document.getElementById('ot-history-list').innerHTML = homeHistoryHTML;
+    
+    // ক্যালেন্ডার বা রিপোর্ট ট্যাবে সিলেক্ট করা মাসের ফুল লিস্ট দেখাবে
     if(document.getElementById('calendar-history-list')) {
-      document.getElementById('calendar-history-list').innerHTML = historyHTML;
+      document.getElementById('calendar-history-list').innerHTML = reportHistoryHTML;
     }
 
     // 🔴 Absent মাইনাস হিসাব
